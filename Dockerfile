@@ -22,5 +22,5 @@ WORKDIR /usr/local/src/dec
 
 RUN cd /usr/local/src/dec/caffe && \
     cp Makefile.config.example Makefile.config && \
-    make -j"$(nproc)" all
-
+    make -j"$(nproc)" all && \
+    make pycaffe
