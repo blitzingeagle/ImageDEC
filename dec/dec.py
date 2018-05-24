@@ -13,7 +13,7 @@ import caffe
 from google import protobuf
 from caffe.proto import caffe_pb2
 from xml.dom import minidom
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 from scipy.spatial.distance import cdist
 import cPickle
 import time
@@ -21,19 +21,19 @@ import time
 def vis_square(fname, data, padsize=1, padval=0):
     data -= data.min()
     data /= data.max()
-    
+
     # force the number of filters to be square
     n = int(np.ceil(np.sqrt(data.shape[0])))
     padding = ((0, n ** 2 - data.shape[0]), (0, padsize), (0, padsize)) + ((0, 0),) * (data.ndim - 3)
     data = np.pad(data, padding, mode='constant', constant_values=(padval, padval))
-    
+
     # tile the filters into an image
     data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, data.ndim + 1)))
     data = data.reshape((n * data.shape[1], n * data.shape[3]) + data.shape[4:])
 
     data = data.mean(axis = -1)
-    
-    plt.imshow(data) 
+
+    plt.imshow(data)
     plt.savefig(fname)
 
 def vis_cluster(dist, patch_dims, ntop, img):
@@ -233,7 +233,7 @@ layers {{
   weight_decay: 1
   weight_decay: 0
   inner_product_param {{
-    num_output: {2} 
+    num_output: {2}
     weight_filler {{
       type: "gaussian"
       std: 0.05
@@ -255,7 +255,7 @@ layers {{
   weight_decay: 1
   weight_decay: 0
   inner_product_param {{
-    num_output: {2} 
+    num_output: {2}
     weight_filler {{
       type: "gaussian"
       std: {3}
@@ -277,7 +277,7 @@ layers {{
   weight_decay: 1
   weight_decay: 0
   inner_product_param {{
-    num_output: {2} 
+    num_output: {2}
     weight_filler {{
       type: "gaussian"
       std: {3}
@@ -404,7 +404,7 @@ def make_reuters_data():
       if len(did_to_cat[did]) > 1:
         del did_to_cat[did]
 
-  dat_list = ['lyrl2004_tokens_test_pt0.dat', 
+  dat_list = ['lyrl2004_tokens_test_pt0.dat',
               'lyrl2004_tokens_test_pt1.dat',
               'lyrl2004_tokens_test_pt2.dat',
               'lyrl2004_tokens_test_pt3.dat',
@@ -488,7 +488,7 @@ def load_stl(fname):
   H = np.asarray(Parallel(n_jobs=n_jobs)( delayed(features.hog)(X[i]) for i in xrange(N) ))
 
   H_img = np.repeat(np.asarray([ hog_picture(H[i], 9) for i in xrange(100) ])[:, :,:,np.newaxis], 3, 3)
-  dispImg(H_img, 10, fname+'_hog.jpg') 
+  dispImg(H_img, 10, fname+'_hog.jpg')
   H = H.reshape((H.shape[0], H.size/N))
 
   X_small = np.asarray(Parallel(n_jobs=n_jobs)( delayed(cv2.resize)(X[i], cmap_size) for i in xrange(N) ))
@@ -538,7 +538,7 @@ def read_db(str_db, float_data = True):
         dt = datum.FromString(v)
         if float_data:
           array.append(dt.float_data)
-        else: 
+        else:
           array.append(np.fromstring(dt.data, dtype=np.uint8))
         label.append(dt.label)
     return np.asarray(array), np.asarray(label)
@@ -620,7 +620,7 @@ def DisKmeans(db, update_interval = None):
     from sklearn.lda import LDA
     from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import normalized_mutual_info_score
-    from scipy.spatial.distance import cdist 
+    from scipy.spatial.distance import cdist
     import cPickle
     from scipy.io import loadmat
 
@@ -720,7 +720,7 @@ def DisKmeans(db, update_interval = None):
       write_db(weight, np.zeros((weight.shape[0],)), 'train_weight')
 
       net.save('init.caffemodel')
-      del net 
+      del net
 
       with open('solver.prototxt', 'w') as fsolver:
             fsolver.write("""net: "net.prototxt"
@@ -765,5 +765,3 @@ if __name__ == '__main__':
     print acc_list
     print nmi_list"""
     DisKmeans(db, lam)
-    
-    
