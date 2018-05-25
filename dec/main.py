@@ -122,7 +122,7 @@ def DisKmeans():
         print (Y_pred != Y_pred_last).sum()*1.0/N
         if (Y_pred != Y_pred_last).sum() < 0.001*N:
             print(acc_list)
-        return acc, nmi
+            return (acc, nmi)
         time.sleep(1)
 
         write_net(db, dim, N_class, "'{:08}'".format(seek))
