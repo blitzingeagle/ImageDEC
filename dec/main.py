@@ -116,7 +116,7 @@ def DisKmeans():
         acc, freq = cluster_acc(Y_pred, Y)
         acc_list.append(acc)
         nmi = normalized_mutual_info_score(Y, Y_pred)
-        print freq
+        print(freq)
         print freq.sum(axis=1)
         print 'acc: ', acc, 'nmi: ', nmi
         print (Y_pred != Y_pred_last).sum()*1.0/N
