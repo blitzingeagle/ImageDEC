@@ -133,7 +133,7 @@ def DisKmeans():
         bias = N_class*bias/bias.sum()
         weight = (weight**2)*bias
         weight = (weight.T/weight.sum(axis=1)).T
-        print weight[:10,:]
+        print(weight[:10,:])
         write_db(weight, np.zeros((weight.shape[0],)), 'train_weight')
 
         net.save('init.caffemodel')
