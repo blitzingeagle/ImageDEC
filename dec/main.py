@@ -103,7 +103,7 @@ def DisKmeans():
     acc_list = []
 
     while True:
-        raw_input("Iteration %d" % iter)
+        raw_input("Iteration %d" % iters)
         dec.write_net(db, dim, N_class, "'{:08}'".format(0))
         if iters == 0:
             dec.write_db(np.zeros((N,N_class)), np.zeros((N,)), 'train_weight')
