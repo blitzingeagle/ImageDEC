@@ -10,7 +10,7 @@ import os
 import os.path as path
 from glob import glob
 from operator import mul
-
+import shutil
 import time
 
 # === Imageset Loading ===
@@ -74,15 +74,15 @@ def DisKmeans():
     import cPickle
     from scipy.io import loadmat
 
-    if db == 'mnist':
-        N_class = 10
-        batch_size = 100
-        train_batch_size = 256
-        X, Y = dec.read_db(db+'_total', True)
-        X = np.asarray(X, dtype=np.float64)
-        Y = np.asarray(np.squeeze(Y), dtype = np.int32)
-        N = X.shape[0]
-        img = np.clip((X/0.02), 0, 255).astype(np.uint8).reshape((N, 28, 28, 1))
+    N_class = 10
+    batch_size = 100
+    train_batch_size = 256
+    X, Y = dec.read_db(db+'_total', True)
+    X = np.asarray(X, dtype=np.float64)
+    Y = np.asarray(np.squeeze(Y), dtype = np.int32)
+    N = X.shape[0]
+    img = np.clip((X/0.02), 0, 255).astype(np.uint8).reshape((N, 28, 28, 1))
+
 
     tmm_alpha = 1.0
     total_iters = (N-1)/train_batch_size+1
@@ -169,8 +169,8 @@ device_id: 0"""%update_interval
 
 
 if __name__ == "__main__":
-    # input_dir = "../images"
-    # imageset = resize_to_mean(load_imageset("images", cv2.IMREAD_GRAYSCALE))
-    # data = columnize(imageset)
+    input_dir = "../images"
+    imageset = resize_to_mean(load_imageset("images", cv2.IMREAD_GRAYSCALE))
+    data = columnize(imageset)
 
-    DisKmeans()
+    # DisKmeans()
