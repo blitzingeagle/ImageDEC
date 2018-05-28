@@ -6,9 +6,12 @@ import dec
 import numpy as np
 import cv2
 
+import os
 import os.path as path
 from glob import glob
 from operator import mul
+
+import time
 
 # === Imageset Loading ===
 def image_paths(directory):
@@ -119,7 +122,7 @@ def DisKmeans():
         print(freq)
         print(freq.sum(axis=1))
         print('acc: ', acc, 'nmi: ', nmi)
-        print (Y_pred != Y_pred_last).sum()*1.0/N
+        print((Y_pred != Y_pred_last).sum()*1.0/N)
         if (Y_pred != Y_pred_last).sum() < 0.001*N:
             print(acc_list)
             return (acc, nmi)
