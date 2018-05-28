@@ -91,6 +91,8 @@ def DisKmeans():
     print(X.shape)
     print(Y.shape)
 
+    X = np.asarray(data)
+
     tmm_alpha = 1.0
     total_iters = (N-1)/train_batch_size+1
     if not update_interval:
@@ -123,16 +125,17 @@ def DisKmeans():
 
         Y_pred_last = Y_pred
         Y_pred = gmm_model.predict(feature).squeeze()
-        acc, freq = dec.cluster_acc(Y_pred, Y)
-        acc_list.append(acc)
-        nmi = normalized_mutual_info_score(Y, Y_pred)
-        print(freq)
-        print(freq.sum(axis=1))
-        print('acc: ', acc, 'nmi: ', nmi)
-        print((Y_pred != Y_pred_last).sum()*1.0/N)
-        if (Y_pred != Y_pred_last).sum() < 0.001*N:
-            print(acc_list)
-            return (acc, nmi)
+        print(Y_pred)
+        # acc, freq = dec.cluster_acc(Y_pred, Y)
+        # acc_list.append(acc)
+        # nmi = normalized_mutual_info_score(Y, Y_pred)
+        # print(freq)
+        # print(freq.sum(axis=1))
+        # print('acc: ', acc, 'nmi: ', nmi)
+        # print((Y_pred != Y_pred_last).sum()*1.0/N)
+        # if (Y_pred != Y_pred_last).sum() < 0.001*N:
+        #     print(acc_list)
+        #     return (acc, nmi)
         time.sleep(1)
 
         dec.write_net(db, dim, N_class, "'{:08}'".format(seek))
