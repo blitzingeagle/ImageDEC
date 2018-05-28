@@ -94,10 +94,10 @@ def DisKmeans():
     acc_list = []
 
     while True:
-        write_net(db, dim, N_class, "'{:08}'".format(0))
+        dec.write_net(db, dim, N_class, "'{:08}'".format(0))
         if iters == 0:
-            write_db(np.zeros((N,N_class)), np.zeros((N,)), 'train_weight')
-            ret, net = extract_feature('net.prototxt', 'exp/'+db+'/save_iter_100000.caffemodel', ['output'], N, True, 0)
+            dec.write_db(np.zeros((N,N_class)), np.zeros((N,)), 'train_weight')
+            ret, net = dec.extract_feature('net.prototxt', 'exp/'+db+'/save_iter_100000.caffemodel', ['output'], N, True, 0)
             feature = ret[0].squeeze()
 
             gmm_model = TMM(N_class)
@@ -125,7 +125,7 @@ def DisKmeans():
             return (acc, nmi)
         time.sleep(1)
 
-        write_net(db, dim, N_class, "'{:08}'".format(seek))
+        dec.write_net(db, dim, N_class, "'{:08}'".format(seek))
         weight = gmm_model.transform(feature)
 
         weight = (weight.T/weight.sum(axis=1)).T
@@ -134,7 +134,7 @@ def DisKmeans():
         weight = (weight**2)*bias
         weight = (weight.T/weight.sum(axis=1)).T
         print(weight[:10,:])
-        write_db(weight, np.zeros((weight.shape[0],)), 'train_weight')
+        dec.write_db(weight, np.zeros((weight.shape[0],)), 'train_weight')
 
         net.save('init.caffemodel')
         del net
