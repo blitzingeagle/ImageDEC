@@ -75,7 +75,7 @@ def DisKmeans():
         N_class = 10
         batch_size = 100
         train_batch_size = 256
-        X, Y = read_db(db+'_total', True)
+        X, Y = dec.read_db(db+'_total', True)
         X = np.asarray(X, dtype=np.float64)
         Y = np.asarray(np.squeeze(Y), dtype = np.int32)
         N = X.shape[0]
@@ -166,8 +166,8 @@ device_id: 0"""%update_interval
 
 
 if __name__ == "__main__":
-    input_dir = "../images"
-    imageset = resize_to_mean(load_imageset("images", cv2.IMREAD_GRAYSCALE))
-    data = columnize(imageset)
+    # input_dir = "../images"
+    # imageset = resize_to_mean(load_imageset("images", cv2.IMREAD_GRAYSCALE))
+    # data = columnize(imageset)
 
     DisKmeans()
