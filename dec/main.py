@@ -62,6 +62,11 @@ def columnize(dataset):
 
 
 def DisKmeans():
+    input_dir = "../images"
+    imageset = resize_to_mean(load_imageset("images", cv2.IMREAD_GRAYSCALE))
+    data = columnize(imageset)
+    print(np.array(data).shape)
+
     db = "mnist"
     update_interval=160
 
@@ -83,6 +88,8 @@ def DisKmeans():
     N = X.shape[0]
     img = np.clip((X/0.02), 0, 255).astype(np.uint8).reshape((N, 28, 28, 1))
 
+    print(X.shape)
+    print(Y.shape)
 
     tmm_alpha = 1.0
     total_iters = (N-1)/train_batch_size+1
@@ -93,6 +100,7 @@ def DisKmeans():
     seek = 0
     dim = 10
 
+    # return
 
     acc_list = []
 
@@ -169,8 +177,4 @@ device_id: 0"""%update_interval
 
 
 if __name__ == "__main__":
-    input_dir = "../images"
-    imageset = resize_to_mean(load_imageset("images", cv2.IMREAD_GRAYSCALE))
-    data = columnize(imageset)
-
-    # DisKmeans()
+    DisKmeans()
