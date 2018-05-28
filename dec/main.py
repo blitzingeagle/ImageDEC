@@ -100,12 +100,12 @@ def DisKmeans():
             ret, net = dec.extract_feature('net.prototxt', 'exp/'+db+'/save_iter_100000.caffemodel', ['output'], N, True, 0)
             feature = ret[0].squeeze()
 
-            gmm_model = TMM(N_class)
+            gmm_model = dec.TMM(N_class)
             gmm_model.fit(feature)
             net.params['loss'][0].data[0,0,:,:] = gmm_model.cluster_centers_.T
             net.params['loss'][1].data[0,0,:,:] = 1.0/gmm_model.covars_.T
         else:
-            ret, net = extract_feature('net.prototxt', 'init.caffemodel', ['output'], N, True, 0)
+            ret, net = dec.extract_feature('net.prototxt', 'init.caffemodel', ['output'], N, True, 0)
             feature = ret[0].squeeze()
 
             gmm_model.cluster_centers_ = net.params['loss'][0].data[0,0,:,:].T
@@ -113,7 +113,7 @@ def DisKmeans():
 
         Y_pred_last = Y_pred
         Y_pred = gmm_model.predict(feature).squeeze()
-        acc, freq = cluster_acc(Y_pred, Y)
+        acc, freq = dec.cluster_acc(Y_pred, Y)
         acc_list.append(acc)
         nmi = normalized_mutual_info_score(Y, Y_pred)
         print(freq)
