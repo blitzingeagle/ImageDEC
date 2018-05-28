@@ -79,7 +79,7 @@ def DisKmeans():
     import cPickle
     from scipy.io import loadmat
 
-    N_class = 10
+    N_class = 2
     batch_size = 100
     train_batch_size = 256
     X, Y = dec.read_db(db+'_total', True)
