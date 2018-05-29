@@ -105,6 +105,12 @@ def DisKmeans():
 
     acc_list = []
 
+    output_dir = "output"
+    for class_idx in range(N_class):
+        group_dir = path.join(output, "group%04d" % class_idx)
+        if not os.path.exists(group_dir):
+            os.makedirs(group_dir)
+
     while True:
         raw_input("Iteration %d" % iters)
         dec.write_net(db, dim, N_class, "'{:08}'".format(0))
