@@ -65,7 +65,7 @@ def DisKmeans():
     input_dir = "../images"
     imageset = resize_to_mean(load_imageset("images", cv2.IMREAD_GRAYSCALE))
     data = columnize(imageset)
-    print(np.array(data).shape)
+    print("Data Loaded")
 
     db = "mnist"
     update_interval=160
@@ -85,14 +85,14 @@ def DisKmeans():
     # X, Y = dec.read_db(db+'_total', True)
     # X = np.asarray(X, dtype=np.float64)
     # Y = np.asarray(np.squeeze(Y), dtype = np.int32)
-    # N = X.shape[0]
-    # img = np.clip((X/0.02), 0, 255).astype(np.uint8).reshape((N, 28, 28, 1))
-
     X = np.asarray(data)
     Y = np.zeros(len(data))
+    N = X.shape[0]
+    # img = np.clip((X/0.02), 0, 255).astype(np.uint8).reshape((N, 28, 28, 1))
 
     print(X.shape)
     print(Y.shape)
+    print(N)
 
     tmm_alpha = 1.0
     total_iters = (N-1)/train_batch_size+1
@@ -107,7 +107,7 @@ def DisKmeans():
 
     output_dir = "output"
     for class_idx in range(N_class):
-        group_dir = path.join(output, "group%04d" % class_idx)
+        group_dir = path.join(output_dir, "group%04d" % class_idx)
         if not os.path.exists(group_dir):
             os.makedirs(group_dir)
 
