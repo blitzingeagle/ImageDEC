@@ -44,12 +44,12 @@ def main(db, params):
             decoder_layers.append(('drop', (str_y, drop)))
             decoder_layers.extend([
                 ('relu', (str_y,)),
-                ('inner_init', (str_y, str_h2, last_dim, np.sqrt(1.0/dim)))            
+                ('inner_init', (str_y, str_h2, last_dim, np.sqrt(1.0/dim)))
                 ])
         else:
             decoder_layers.extend([
                 ('inner_init', (str_y, str_h2, last_dim, np.sqrt(1.0/dim)))
-                           
+
                 ])
         last_dim = dim
     with open('pt_net.prototxt', 'w') as fnet:
@@ -72,10 +72,10 @@ snapshot: 10000
 snapshot_prefix: "exp/{4}/save"
 snapshot_after_train:true
 solver_mode: GPU
-debug_info: false 
+debug_info: false
 device_id: 0""".format(rate, params['step'][0], niter, params['decay'][0],db ))
 
-    
+
 
 def pretrain_main(db, params):
     dim = params['dim']
@@ -138,7 +138,7 @@ snapshot: 10000
 snapshot_prefix: "exp/{4}/save"
 snapshot_after_train:true
 solver_mode: GPU
-debug_info: false 
+debug_info: false
 device_id: 0""".format(rate, params['step'][0], params['pt_iter'][0], params['decay'][0], db))
 
         if i > 0:
@@ -146,7 +146,7 @@ device_id: 0""".format(rate, params['step'][0], params['pt_iter'][0], params['de
         else:
             model = None
 
-        mean, net = dec.extract_feature('stack_net.prototxt', model, 
+        mean, net = dec.extract_feature('stack_net.prototxt', model,
                                         [str_x], 1, train=True, device=0)
 
         net.save('stack_init.caffemodel')
@@ -181,5 +181,4 @@ if __name__ == '__main__':
                'drop': [0.0], 'rate': [0.1], 'step': [20000], 'iter':[100000], 'decay': [0.0000]})
     print pretrain_main(db, {'dim': [input_dim, 500, 500, 2000, 10], 'pt_iter': [50000],
               'drop': [0.2], 'rate': [0.1], 'step': [20000], 'iter':[100000], 'decay': [0.0000]})
-    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel") 
-
+    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")

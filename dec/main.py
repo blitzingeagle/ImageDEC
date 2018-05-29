@@ -62,8 +62,8 @@ def columnize(dataset):
 
 
 def DisKmeans():
-    input_dir = "../images"
-    imageset = resize_to_mean(load_imageset("images", cv2.IMREAD_GRAYSCALE))
+    input_dir = "images"
+    imageset = resize_to_mean(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE))
     data = columnize(imageset)
     print("Data Loaded")
 
@@ -79,7 +79,7 @@ def DisKmeans():
     import cPickle
     from scipy.io import loadmat
 
-    N_class = 2
+    N_class = 5
     batch_size = 100
     train_batch_size = 256
     # X, Y = dec.read_db(db+'_total', True)
@@ -141,8 +141,9 @@ def DisKmeans():
         # print(freq)
         # print(freq.sum(axis=1))
         # print('acc: ', acc, 'nmi: ', nmi)
-        # print((Y_pred != Y_pred_last).sum()*1.0/N)
-        # if (Y_pred != Y_pred_last).sum() < 0.001*N:
+        print((Y_pred != Y_pred_last).sum()*1.0/N)
+        if (Y_pred != Y_pred_last).sum() < 0.001*N:
+            break
         #     print(acc_list)
         #     return (acc, nmi)
         time.sleep(1)
@@ -185,6 +186,10 @@ device_id: 0"""%update_interval
 
         iters += 1
         seek = (seek + train_batch_size*update_interval)%N
+
+    for idx, pred in enumerate(Y_pred):
+        shutil.copyfile(path.join(input_dir, "%05d.png" % idx), path.join(output_dir, "group%04d" % pred, "%05d.png" % idx))
+        print(idx, "->", pred)
 
 if __name__ == "__main__":
     DisKmeans()
