@@ -744,6 +744,7 @@ device_id: 0"""%update_interval)
 
       iters += 1
       seek = (seek + train_batch_size*update_interval)%N
+      
 
 if __name__ == '__main__':
     db = sys.argv[1]

@@ -63,7 +63,7 @@ def columnize(dataset):
 
 def DisKmeans():
     input_dir = "images"
-    imageset = resize_to_mean(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE))
+    imageset = resize_images(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (50, 50))
     data = columnize(imageset)
     print("Data Loaded")
 
@@ -120,9 +120,11 @@ def DisKmeans():
             dec.write_db(np.zeros((N,N_class)), np.zeros((N,)), 'train_weight')
             ret, net = dec.extract_feature('net.prototxt', 'exp/'+db+'/save_iter_100000.caffemodel', ['output'], N, True, 0)
             feature = ret[0].squeeze()
+            print("Feature shape", feature.shape)
 
             gmm_model = dec.TMM(N_class)
             gmm_model.fit(feature)
+            # gmm_model.fit(X)
             net.params['loss'][0].data[0,0,:,:] = gmm_model.cluster_centers_.T
             net.params['loss'][1].data[0,0,:,:] = 1.0/gmm_model.covars_.T
         else:
@@ -132,6 +134,7 @@ def DisKmeans():
             gmm_model.cluster_centers_ = net.params['loss'][0].data[0,0,:,:].T
 
 
+        gmm_model.fit(X)
         Y_pred_last = Y_pred
         Y_pred = gmm_model.predict(feature).squeeze()
         print(Y_pred)
