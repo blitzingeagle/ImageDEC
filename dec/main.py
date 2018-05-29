@@ -113,7 +113,7 @@ def DisKmeans():
         group_dir = path.join(output_dir, "group%04d" % class_idx)
         os.makedirs(group_dir)
 
-    while True:
+    while iters < 1:
         # raw_input("Iteration %d" % iters)
         dec.write_net(db, dim, N_class, "'{:08}'".format(0))
         if iters == 0:
@@ -136,7 +136,8 @@ def DisKmeans():
 
         gmm_model.fit(X)
         Y_pred_last = Y_pred
-        Y_pred = gmm_model.predict(feature).squeeze()
+        Y_pred = gmm_model.predict(X).squeeze()
+        # Y_pred = gmm_model.predict(feature).squeeze()
         print(Y_pred)
         # acc, freq = dec.cluster_acc(Y_pred, Y)
         # acc_list.append(acc)
@@ -152,7 +153,8 @@ def DisKmeans():
         time.sleep(1)
 
         dec.write_net(db, dim, N_class, "'{:08}'".format(seek))
-        weight = gmm_model.transform(feature)
+        weight = gmm_model.transform(X)
+        # weight = gmm_model.transform(feature)
 
         weight = (weight.T/weight.sum(axis=1)).T
         bias = (1.0/weight.sum(axis=0))
