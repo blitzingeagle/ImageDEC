@@ -107,7 +107,7 @@ def DisKmeans():
 
     output_dir = "output"
     if path.exists(output_dir):
-        os.rmdir(output_dir)
+        shutil.rmtree(output_dir)
         os.makedirs(output_dir)
     for class_idx in range(N_class):
         group_dir = path.join(output_dir, "group%04d" % class_idx)
@@ -185,7 +185,6 @@ device_id: 0"""%update_interval
 
         iters += 1
         seek = (seek + train_batch_size*update_interval)%N
-
 
 if __name__ == "__main__":
     DisKmeans()
