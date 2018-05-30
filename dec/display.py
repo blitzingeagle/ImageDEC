@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
 
-x = [np.random.random((50, 50, 3))] * 10
+x = [np.random.random((50, 50, 3))] * 20
 y = np.hstack(x)
-y = [y for i in xrange(10)]
+y = [y for i in xrange(20)]
 z = np.vstack(y)
 
 cv2.imshow("stack", z)
