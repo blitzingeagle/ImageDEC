@@ -103,12 +103,12 @@ def make_mnist_data():
 
 
 def DisKmeans():
-    input_dir = "images"
+    input_dir = "../images"
     imageset = resize_images(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (50, 50))
     data = columnize(imageset)
     print("Data Loaded")
 
-    db = "mnist"
+    db = "image"
     update_interval=160
 
     from sklearn.cluster import KMeans
@@ -159,7 +159,7 @@ def DisKmeans():
         dec.write_net(db, dim, N_class, "'{:08}'".format(0))
         if iters == 0:
             dec.write_db(np.zeros((N,N_class)), np.zeros((N,)), 'train_weight')
-            ret, net = dec.extract_feature('net.prototxt', 'exp/'+db+'/save_iter_100000.caffemodel', ['output'], N, True, 0)
+            ret, net = dec.extract_feature('net.prototxt', 'exp/'+db+'/save_iter_50000.caffemodel', ['output'], N, True, 0)
             feature = ret[0].squeeze()
             print("Feature shape", feature.shape)
 
@@ -237,31 +237,58 @@ device_id: 0"""%update_interval
         shutil.copyfile(path.join(input_dir, "%05d.png" % idx), path.join(output_dir, "group%04d" % pred, "%05d.png" % idx))
         print(idx, "->", pred)
 
+
+def make_image_data(data):
+    X = np.asarray(data[:-1]).astype(np.float64) / 255.0
+    Y = np.asarray([0] * len(data[:-1]))
+    dec.write_db(X, Y, 'image_train')
+
+    X_, Y_ = dec.read_db('image_train', True)
+    assert np.abs((X - X_)).mean() < 1e-5
+    assert (Y != Y_).sum() == 0
+
+    X2 = np.asarray(data[-1:]).astype(np.float64) / 255.0
+    Y2 = np.asarray([0] * len(data[-1:]))
+    dec.write_db(X2, Y2, 'image_test')
+
+    X3 = np.concatenate((X,X2), axis=0)
+    Y3 = np.concatenate((Y,Y2), axis=0)
+    dec.write_db(X3, Y3, 'image_total')
+
+
 if __name__ == "__main__":
-    db = "mnist"
-    input_dim = 784
-    make_mnist_data()
+    # db = "image"
+    # input_dir = "../images"
+    # output_dir = "output"
+    #
+    # img_width = 50
+    # img_height = 50
+    # input_dim = img_width * img_height
+    #
+    # data = columnize(resize_images(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
+    #
+    # make_image_data(data)
+    #
+    # pretrain.main(db, {
+    #     'n_layer': [4],
+    #     'dim': [input_dim, 500, 500, 2000, 10],
+    #     'drop': [0.0],
+    #     'rate': [0.1],
+    #     'step': [20000],
+    #     'iter': [100000],
+    #     'decay': [0.0000]
+    # })
+    #
+    # pretrain.pretrain_main(db, {
+    #     'dim': [input_dim, 500, 500, 2000, 10],
+    #     'pt_iter': [50000],
+    #     'drop': [0.2],
+    #     'rate': [0.1],
+    #     'step': [20000],
+    #     'iter': [100000],
+    #     'decay': [0.0000]
+    # })
+    #
+    # os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
 
-    pretrain.main(db, {
-        'n_layer': [4],
-        'dim': [input_dim, 500, 500, 2000, 10],
-        'drop': [0.0],
-        'rate': [0.1],
-        'step': [20000],
-        'iter': [100000],
-        'decay': [0.0000]
-    })
-
-    pretrain.pretrain_main(db, {
-        'dim': [input_dim, 500, 500, 2000, 10],
-        'pt_iter': [50000],
-        'drop': [0.2],
-        'rate': [0.1],
-        'step': [20000],
-        'iter': [100000],
-        'decay': [0.0000]
-    })
-
-    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
-
-    # DisKmeans()
+    DisKmeans()

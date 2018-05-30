@@ -376,6 +376,7 @@ def load_mnist(root, training):
 
 def make_mnist_data():
     X, Y = load_mnist('../mnist/', True)
+    exit()
     X = X.astype(np.float64)*0.02
     write_db(X, Y, 'mnist_train')
 

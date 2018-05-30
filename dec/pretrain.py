@@ -152,7 +152,7 @@ device_id: 0""".format(rate, params['step'][0], params['pt_iter'][0], params['de
         net.save('stack_init.caffemodel')
 
         os.system('caffe train --solver=pt_solver.prototxt --weights=stack_init.caffemodel')
-
+        print "Finish OS call"
 
         net = caffe.Net('stack_net.prototxt', 'exp/'+db+'/save_iter_%d.caffemodel'%params['pt_iter'][0])
         w_down.append(net.params['d_'+str_x][0].data.copy())
