@@ -174,9 +174,10 @@ device_id: 0""".format(rate, params['step'][0], params['pt_iter'][0], params['de
 
 
 if __name__ == '__main__':
-    db = 'mnist'
-    input_dim = 784
-    #dec.make_mnist_data()
+    db = 'mnist'        # Database name
+    input_dim = 784     # Dimension for input images (28x28=784)
+    dec.make_mnist_data()   
+
     print main(db, {'n_layer':[4], 'dim': [input_dim, 500, 500, 2000, 10],
                'drop': [0.0], 'rate': [0.1], 'step': [20000], 'iter':[100000], 'decay': [0.0000]})
     print pretrain_main(db, {'dim': [input_dim, 500, 500, 2000, 10], 'pt_iter': [50000],
