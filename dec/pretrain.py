@@ -179,12 +179,12 @@ if __name__ == '__main__':
     dec.make_mnist_data()   # Prepare database for initial training
 
     print main(db, {
-        'n_layer':[4],
+        'n_layer': [4],
         'dim': [input_dim, 500, 500, 2000, 10],
         'drop': [0.0],
         'rate': [0.1],
         'step': [20000],
-        'iter':[100000],
+        'iter': [100000],
         'decay': [0.0000]
     })
 
@@ -194,8 +194,8 @@ if __name__ == '__main__':
         'drop': [0.2],
         'rate': [0.1],
         'step': [20000],
-        'iter':[100000],
+        'iter': [100000],
         'decay': [0.0000]
     })
-    
+
     os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
