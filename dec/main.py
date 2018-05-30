@@ -62,6 +62,46 @@ def columnize(dataset):
     return [elem.reshape(reduce(mul, elem.shape, 1)) for elem in dataset]
 
 
+def load_mnist(root, training):
+    if training:
+        data = 'train-images-idx3-ubyte'
+        label = 'train-labels-idx1-ubyte'
+        N = 60000
+    else:
+        data = 't10k-images-idx3-ubyte'
+        label = 't10k-labels-idx1-ubyte'
+        N = 10000
+    with open(root+data, 'rb') as fin:
+        fin.seek(16, os.SEEK_SET)
+        X = np.fromfile(fin, dtype=np.uint8).reshape((N,28*28))
+        # for x in X:
+        #     x = x.reshape((28,28))
+        #     cv2.imshow("mnist", x)
+        #     if cv2.waitKey(1) & 0xFF == ord('q'):
+        #         break
+    with open(root+label, 'rb') as fin:
+        fin.seek(8, os.SEEK_SET)
+        Y = np.fromfile(fin, dtype=np.uint8)
+    return X, Y
+
+def make_mnist_data():
+    X, Y = load_mnist('../mnist/', True)
+    X = X.astype(np.float64)*0.02
+    dec.write_db(X, Y, 'mnist_train')
+
+    X_, Y_ = read_db('mnist_train', True)
+    assert np.abs((X - X_)).mean() < 1e-5
+    assert (Y != Y_).sum() == 0
+
+    X2, Y2 = load_mnist('../mnist/', False)
+    X2 = X2.astype(np.float64)*0.02
+    dec.write_db(X2, Y2, 'mnist_test')
+
+    X3 = np.concatenate((X,X2), axis=0)
+    Y3 = np.concatenate((Y,Y2), axis=0)
+    dec.write_db(X3,Y3, 'mnist_total')
+
+
 def DisKmeans():
     input_dir = "images"
     imageset = resize_images(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (50, 50))
@@ -200,7 +240,7 @@ device_id: 0"""%update_interval
 if __name__ == "__main__":
     db = "mnist"
     input_dim = 784
-    dec.make_mnist_data()
+    make_mnist_data()
 
     pretrain.main(db, {
         'n_layer': [4],
