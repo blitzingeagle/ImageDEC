@@ -257,38 +257,38 @@ def make_image_data(data):
 
 
 if __name__ == "__main__":
-    # db = "image"
-    # input_dir = "../images"
-    # output_dir = "output"
-    #
-    # img_width = 50
-    # img_height = 50
-    # input_dim = img_width * img_height
-    #
-    # data = columnize(resize_images(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
-    #
-    # make_image_data(data)
-    #
-    # pretrain.main(db, {
-    #     'n_layer': [4],
-    #     'dim': [input_dim, 500, 500, 2000, 10],
-    #     'drop': [0.0],
-    #     'rate': [0.1],
-    #     'step': [20000],
-    #     'iter': [100000],
-    #     'decay': [0.0000]
-    # })
-    #
-    # pretrain.pretrain_main(db, {
-    #     'dim': [input_dim, 500, 500, 2000, 10],
-    #     'pt_iter': [50000],
-    #     'drop': [0.2],
-    #     'rate': [0.1],
-    #     'step': [20000],
-    #     'iter': [100000],
-    #     'decay': [0.0000]
-    # })
-    #
-    # os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+    db = "image"
+    input_dir = "../images"
+    output_dir = "output"
+
+    img_width = 50
+    img_height = 50
+    input_dim = img_width * img_height
+
+    data = columnize(resize_images(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
+
+    make_image_data(data)
+
+    pretrain.main(db, {
+        'n_layer': [4],
+        'dim': [input_dim, 500, 500, 2000, 10],
+        'drop': [0.0],
+        'rate': [0.1],
+        'step': [20000],
+        'iter': [100000],
+        'decay': [0.0000]
+    })
+
+    pretrain.pretrain_main(db, {
+        'dim': [input_dim, 500, 500, 2000, 10],
+        'pt_iter': [50000],
+        'drop': [0.2],
+        'rate': [0.1],
+        'step': [20000],
+        'iter': [100000],
+        'decay': [0.0000]
+    })
+
+    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
 
     DisKmeans()
