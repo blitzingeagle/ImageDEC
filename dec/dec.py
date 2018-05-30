@@ -375,22 +375,22 @@ def load_mnist(root, training):
     return X, Y
 
 def make_mnist_data():
-  X, Y = load_mnist('../mnist/', True)
-  # exit()
-  X = X.astype(np.float64)*0.02
-  write_db(X, Y, 'mnist_train')
+    X, Y = load_mnist('../mnist/', True)
+    # exit()
+    X = X.astype(np.float64)*0.02
+    write_db(X, Y, 'mnist_train')
 
-  X_, Y_ = read_db('mnist_train', True)
-  assert np.abs((X - X_)).mean() < 1e-5
-  assert (Y != Y_).sum() == 0
+    X_, Y_ = read_db('mnist_train', True)
+    assert np.abs((X - X_)).mean() < 1e-5
+    assert (Y != Y_).sum() == 0
 
-  X2, Y2 = load_mnist('../mnist/', False)
-  X2 = X2.astype(np.float64)*0.02
-  write_db(X2, Y2, 'mnist_test')
+    X2, Y2 = load_mnist('../mnist/', False)
+    X2 = X2.astype(np.float64)*0.02
+    write_db(X2, Y2, 'mnist_test')
 
-  X3 = np.concatenate((X,X2), axis=0)
-  Y3 = np.concatenate((Y,Y2), axis=0)
-  write_db(X3,Y3, 'mnist_total')
+    X3 = np.concatenate((X,X2), axis=0)
+    Y3 = np.concatenate((Y,Y2), axis=0)
+    write_db(X3,Y3, 'mnist_total')
 
 def make_reuters_data():
   np.random.seed(1234)
