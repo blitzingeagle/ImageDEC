@@ -3,8 +3,10 @@ import numpy as np
 
 x = [np.random.random((50, 50, 3))] * 10
 y = np.hstack(x)
+y = [y for i in xrange(10)]
+z = np.vstack(y)
 
-cv2.imshow("stack", y)
+cv2.imshow("stack", z)
 cv2.waitKey()
 cv2.destroyAllWindows()
 
