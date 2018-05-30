@@ -353,21 +353,21 @@ class TMM(object):
     return self.transform(X).argmax(axis=1)
 
 def load_mnist(root, training):
-  if training:
-    data = 'train-images-idx3-ubyte'
-    label = 'train-labels-idx1-ubyte'
-    N = 60000
-  else:
-    data = 't10k-images-idx3-ubyte'
-    label = 't10k-labels-idx1-ubyte'
-    N = 10000
-  with open(root+data, 'rb') as fin:
-    fin.seek(16, os.SEEK_SET)
-    X = np.fromfile(fin, dtype=np.uint8).reshape((N,28*28))
-  with open(root+label, 'rb') as fin:
-    fin.seek(8, os.SEEK_SET)
-    Y = np.fromfile(fin, dtype=np.uint8)
-  return X, Y
+    if training:
+        data = 'train-images-idx3-ubyte'
+        label = 'train-labels-idx1-ubyte'
+        N = 60000
+    else:
+        data = 't10k-images-idx3-ubyte'
+        label = 't10k-labels-idx1-ubyte'
+        N = 10000
+    with open(root+data, 'rb') as fin:
+        fin.seek(16, os.SEEK_SET)
+        X = np.fromfile(fin, dtype=np.uint8).reshape((N,28*28))
+    with open(root+label, 'rb') as fin:
+        fin.seek(8, os.SEEK_SET)
+        Y = np.fromfile(fin, dtype=np.uint8)
+    return X, Y
 
 def make_mnist_data():
   X, Y = load_mnist('../mnist/', True)
