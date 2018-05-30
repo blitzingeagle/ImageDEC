@@ -89,7 +89,7 @@ def make_mnist_data():
     X = X.astype(np.float64)*0.02
     dec.write_db(X, Y, 'mnist_train')
 
-    X_, Y_ = read_db('mnist_train', True)
+    X_, Y_ = dec.read_db('mnist_train', True)
     assert np.abs((X - X_)).mean() < 1e-5
     assert (Y != Y_).sum() == 0
 
