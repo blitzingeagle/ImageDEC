@@ -4,7 +4,6 @@ import sys
 sys.path = ['../caffe/python'] + sys.path
 
 import cv2
-import cv
 import numpy as np
 import shutil
 import random
@@ -744,7 +743,7 @@ device_id: 0"""%update_interval)
 
       iters += 1
       seek = (seek + train_batch_size*update_interval)%N
-      
+
 
 if __name__ == '__main__':
     db = sys.argv[1]
