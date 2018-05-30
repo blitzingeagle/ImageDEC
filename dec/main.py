@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import print_function
 
 import dec
+import pretrain
 
 import numpy as np
 import cv2
@@ -197,4 +198,30 @@ device_id: 0"""%update_interval
         print(idx, "->", pred)
 
 if __name__ == "__main__":
-    DisKmeans()
+    db = "mnist"
+    input_dim = 784
+    dec.make_mnist_data()
+
+    pretrain.main(db, {
+        'n_layer': [4],
+        'dim': [input_dim, 500, 500, 2000, 10],
+        'drop': [0.0],
+        'rate': [0.1],
+        'step': [20000],
+        'iter': [100000],
+        'decay': [0.0000]
+    })
+
+    pretrain.pretrain_main(db, {
+        'dim': [input_dim, 500, 500, 2000, 10],
+        'pt_iter': [50000],
+        'drop': [0.2],
+        'rate': [0.1],
+        'step': [20000],
+        'iter': [100000],
+        'decay': [0.0000]
+    })
+
+    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+
+    # DisKmeans()

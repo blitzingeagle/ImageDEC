@@ -364,11 +364,11 @@ def load_mnist(root, training):
     with open(root+data, 'rb') as fin:
         fin.seek(16, os.SEEK_SET)
         X = np.fromfile(fin, dtype=np.uint8).reshape((N,28*28))
-        for x in X:
-            x = x.reshape((28,28))
-            cv2.imshow("mnist", x)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        # for x in X:
+        #     x = x.reshape((28,28))
+        #     cv2.imshow("mnist", x)
+        #     if cv2.waitKey(1) & 0xFF == ord('q'):
+        #         break
     with open(root+label, 'rb') as fin:
         fin.seek(8, os.SEEK_SET)
         Y = np.fromfile(fin, dtype=np.uint8)
@@ -376,7 +376,6 @@ def load_mnist(root, training):
 
 def make_mnist_data():
     X, Y = load_mnist('../mnist/', True)
-    # exit()
     X = X.astype(np.float64)*0.02
     write_db(X, Y, 'mnist_train')
 
