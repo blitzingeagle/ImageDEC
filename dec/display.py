@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-x = [np.random.random((50, 50, 3))] * 35
+x = [np.random.random((50, 50, 3))] * 40
 y = np.hstack(x)
 y = [y for i in xrange(20)]
 z = np.vstack(y)
