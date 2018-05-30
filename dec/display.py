@@ -1,13 +1,12 @@
 import cv2
 import numpy as np
 
-x = np.random.random((50, 50, 3))
-y = np.random.random((50, 50, 3))
-z1 = np.hstack([x, y])
-z2 = np.vstack([x, y])
+x = [np.random.random((50, 50, 3))] * 10
+z1 = np.hstack(x)
+# z2 = np.vstack([x, y])
 
 cv2.imshow("hstack", z1)
-cv2.imshow("vstask", z2)
+# cv2.imshow("vstask", z2)
 cv2.waitKey()
 cv2.destroyAllWindows()
 
