@@ -14,5 +14,5 @@ snapshot: 10000
 snapshot_prefix: "exp/mnist/save"
 snapshot_after_train:true
 solver_mode: GPU
-debug_info: false 
+debug_info: false
 device_id: 0
