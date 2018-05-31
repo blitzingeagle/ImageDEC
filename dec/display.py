@@ -1,14 +1,18 @@
 import cv2
 import numpy as np
 
-x = [np.random.random((50, 50, 3))] * 40
-y = np.hstack(x)
-y = [y for i in xrange(20)]
-z = np.vstack(y)
+import os
+import os.path as path
+from glob import glob
 
-cv2.imshow("stack", z)
-cv2.waitKey()
-cv2.destroyAllWindows()
+# x = [np.random.random((50, 50, 3))] * 40
+# y = np.hstack(x)
+# y = [y for i in xrange(20)]
+# z = np.vstack(y)
+#
+# cv2.imshow("stack", z)
+# cv2.waitKey()
+# cv2.destroyAllWindows()
 
 """
 import cv2
@@ -36,3 +40,8 @@ cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
 
 cv2.waitKey()
 """
+
+output_dir = "output"
+group_dirs = sorted(glob(path.join(output_dir, "group*")))
+group_cnt = len(group_dirs)
+print(group_cnt)
