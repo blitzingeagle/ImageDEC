@@ -67,3 +67,10 @@ page_num = 0
 imgset = imgutils.resize_images(imgutils.load_imageset(group_dir), (img_height, img_width))
 size = len(imgset)
 print(size)
+
+rows = [np.hstack(imgset[r*page_width : (r+1)*page_width]) for r in xrange(size // page_width)]
+
+for row in rows:
+    cv2.imshow("row", rows)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
