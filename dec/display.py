@@ -54,6 +54,15 @@ page_width = 30
 page_height = 20
 page_total = page_width * page_height
 
+def blank_image():
+    global img_width, img_height
+    return np.eye(img_width) if img_width == img_height else np.zeros((img_width, img_height))
+
+cv2.imshow("blank", blank_image())
+cv2.waitKey()
+cv2.destroyAllWindows()
+exit()
+
 output_dir = "output"
 group_dirs = sorted(glob(path.join(output_dir, "group*")))
 group_cnt = len(group_dirs)
@@ -68,7 +77,13 @@ imgset = imgutils.resize_images(imgutils.load_imageset(group_dir), (img_height, 
 size = len(imgset)
 print(size)
 
-rows = [np.hstack(imgset[r*page_width : (r+1)*page_width]) for r in xrange(size // page_width)]
+full_rows = size // page_width
+rows = [np.hstack(imgset[r*page_width : (r+1)*page_width]) for r in xrange(full_rows)]
+last = np.hstack(imgset[full_rows*page_width:])
+
+cv2.imshow("last", last)
+cv2.waitKey()
+cv2.destroyAllWindows()
 
 for row in rows:
     cv2.imshow("row", rows)
