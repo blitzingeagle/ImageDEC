@@ -8,6 +8,10 @@ dec/net.prototxt
 dec/solver.prototxt
 dec/train_weight/
 dec/images/
+dec/output/
+dec/image_test/
+dec/image_total/
+dec/image_train/
 mnist/t10k-images-idx3-ubyte
 mnist/t10k-labels-idx1-ubyte
 mnist/train-images-idx3-ubyte
