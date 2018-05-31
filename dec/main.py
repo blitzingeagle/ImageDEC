@@ -54,12 +54,7 @@ def make_mnist_data():
     dec.write_db(X3,Y3, 'mnist_total')
 
 
-def DisKmeans():
-    input_dir = "../images"
-    imageset = resize_images(load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (50, 50))
-    data = columnize(imageset)
-    print("Data Loaded")
-
+def DisKmeans(data):
     db = "image"
     update_interval=160
 
@@ -212,35 +207,47 @@ if __name__ == "__main__":
     db = "image"
     input_dir = "../images"
     output_dir = "output"
+    option = None
 
     img_width = 50
     img_height = 50
-    input_dim = img_width * img_height
 
-    data = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
+    if option == None:
+        img_channels = 4
+        input_dim = img_width * img_height * img_channels
+        data1 = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, cv2.IMREAD_COLOR), (img_width, img_height)))
+        data2 = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
+        data = np.hstack([data1,data2])
+        print(len(data1))
+        print(len(data2))
+        print(data.shape)
+    else:
+        img_channels = 3 if option == cv2.IMREAD_COLOR else 1
+        input_dim = img_width * img_height * img_channels
+        data = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, option), (img_width, img_height)))
 
-    # make_image_data(data)
-    #
-    # pretrain.main(db, {
-    #     'n_layer': [4],
-    #     'dim': [input_dim, 500, 500, 2000, 10],
-    #     'drop': [0.0],
-    #     'rate': [0.1],
-    #     'step': [20000],
-    #     'iter': [100000],
-    #     'decay': [0.0000]
-    # })
-    #
-    # pretrain.pretrain_main(db, {
-    #     'dim': [input_dim, 500, 500, 2000, 10],
-    #     'pt_iter': [50000],
-    #     'drop': [0.2],
-    #     'rate': [0.1],
-    #     'step': [20000],
-    #     'iter': [100000],
-    #     'decay': [0.0000]
-    # })
-    #
-    # os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
-    #
-    # DisKmeans()
+    make_image_data(data)
+
+    pretrain.main(db, {
+        'n_layer': [4],
+        'dim': [input_dim, 500, 500, 2000, 10],
+        'drop': [0.0],
+        'rate': [0.1],
+        'step': [20000],
+        'iter': [100000],
+        'decay': [0.0000]
+    })
+
+    pretrain.pretrain_main(db, {
+        'dim': [input_dim, 500, 500, 2000, 10],
+        'pt_iter': [50000],
+        'drop': [0.2],
+        'rate': [0.1],
+        'step': [20000],
+        'iter': [100000],
+        'decay': [0.0000]
+    })
+
+    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+
+    DisKmeans(data)
