@@ -1,3 +1,4 @@
+from __future__ import division
 from __future__ import print_function
 
 import imageset_utils as imgutils
@@ -46,6 +47,13 @@ cv2.imshow('Numpy Horizontal Concat', numpy_horizontal_concat)
 cv2.waitKey()
 """
 
+img_width = 50
+img_height = 50
+
+page_width = 30
+page_height = 20
+page_total = page_width * page_height
+
 output_dir = "output"
 group_dirs = sorted(glob(path.join(output_dir, "group*")))
 group_cnt = len(group_dirs)
@@ -54,3 +62,8 @@ print(group_cnt)
 
 group_idx = 0
 group_dir = group_dirs[group_idx]
+page_num = 0
+
+imgset = imgutils.resize_images(imgutils.load_imageset(group_dir), (img_height, img_width))
+size = len(imgset)
+print(size)
