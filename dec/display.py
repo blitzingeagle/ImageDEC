@@ -1,3 +1,7 @@
+from __future__ import print_function
+
+import imageset_utils as imgutils
+
 import cv2
 import numpy as np
 
@@ -29,7 +33,8 @@ grey_3_channel = cv2.cvtColor(grey, cv2.COLOR_GRAY2BGR)
 numpy_vertical = np.vstack((image, grey_3_channel))
 numpy_horizontal = np.hstack((image, grey_3_channel))
 
-numpy_vertical_concat = np.concatenate((image, grey_3_channel), axis=0)
+numpy_vertical_concat = np.concatenate((imag
+for group_dir in group_dirs:e, grey_3_channel), axis=0)
 numpy_horizontal_concat = np.concatenate((image, grey_3_channel), axis=1)
 
 cv2.imshow('Main', image)
@@ -44,4 +49,8 @@ cv2.waitKey()
 output_dir = "output"
 group_dirs = sorted(glob(path.join(output_dir, "group*")))
 group_cnt = len(group_dirs)
+
 print(group_cnt)
+
+group_idx = 0
+group_dir = group_dirs[group_idx]
