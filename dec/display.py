@@ -54,7 +54,9 @@ page_width = 30
 page_height = 20
 page_total = page_width * page_height
 
-blank_image = [[[0., 0., 127.]] * 50] * 50
+option = cv2.IMREAD_GRAYSCALE
+
+blank_image = [[[0., 0., 127.]] * 50] * 50 if option == cv2.IMREAD_COLOR else [[127.] * 50] * 50 
 
 output_dir = "output"
 group_dirs = sorted(glob(path.join(output_dir, "group*")))
@@ -63,20 +65,31 @@ group_cnt = len(group_dirs)
 print(group_cnt)
 
 group_idx = 0
-group_dir = group_dirs[group_idx]
 page_num = 0
+imgsets = [None] * group_cnt
 
-imgset = imgutils.resize_images(imgutils.load_imageset(group_dir), (img_height, img_width))
-size = len(imgset)
-print(size)
+while True:
+    group_dir = group_dirs[group_idx]
+    if imgsets[group_idx] == None:
+        imgsets[group_idx] = imgutils.resize_images(imgutils.load_imageset(group_dir, option), (img_height, img_width))
+    imgset = imgsets[group_idx]
+    size = len(imgset)
 
-full_rows = size // page_width
-rows = [np.hstack(imgset[r*page_width : (r+1)*page_width]) / 255 for r in xrange(full_rows)]
-rows.append(np.hstack(imgset[full_rows*page_width:] + [blank_image] * (page_width - size % page_width)) / 255)
-page = np.vstack(rows)
+    full_rows = size // page_width
+    rows = [np.hstack(imgset[r*page_width : (r+1)*page_width]) / 255 for r in xrange(full_rows)]
+    rows.append(np.hstack(imgset[full_rows*page_width:] + [blank_image] * (page_width - size % page_width)) / 255)
+    page = np.vstack(rows)
 
-cv2.imshow("page", page)
-key = cv2.waitKey()
-cv2.destroyAllWindows()
+    print(group_dir)
+    cv2.imshow("Output", page)
+    key = cv2.waitKey()
 
-print(key)
+    if key == 1048603:  # ESC
+        cv2.destroyAllWindows()
+        break
+    elif key == 1113939:
+        group_idx = min(group_idx+1, group_cnt-1)
+        page_num = 0
+    elif key == 1113937:
+        group_idx = max(group_idx-1, 0)
+        page_num = 0
