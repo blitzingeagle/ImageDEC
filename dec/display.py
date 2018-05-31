@@ -54,9 +54,9 @@ page_width = 30
 page_height = 20
 page_total = page_width * page_height
 
-option = cv2.IMREAD_GRAYSCALE
+option = cv2.IMREAD_COLOR
 
-blank_image = [[[0., 0., 127.]] * 50] * 50 if option == cv2.IMREAD_COLOR else [[127.] * 50] * 50 
+blank_image = [[[0., 0., 127.]] * 50] * 50 if option == cv2.IMREAD_COLOR else [[127.] * 50] * 50
 
 output_dir = "output"
 group_dirs = sorted(glob(path.join(output_dir, "group*")))
