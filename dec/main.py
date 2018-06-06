@@ -12,7 +12,7 @@ import os
 import os.path as path
 import shutil
 import time
-
+from glob import glob
 
 def load_mnist(root, training):
     if training:
@@ -180,9 +180,12 @@ device_id: 0"""%update_interval
         iters += 1
         seek = (seek + train_batch_size*update_interval)%N
 
+    file_list = sorted(glob(path.join(input_dir, "*")))
+    print(file_list)
     for idx, pred in enumerate(Y_pred):
-        shutil.copyfile(path.join(input_dir, "%05d.png" % idx), path.join(output_dir, "group%04d" % pred, "%05d.png" % idx))
-        print(idx, "->", pred)
+        filename = os.path.basename(file_list[idx])
+        shutil.copyfile(file_list[idx], path.join(output_dir, "group%04d" % pred, filename))
+        print(filename, "->", pred)
 
 
 def make_image_data(data):
@@ -205,7 +208,9 @@ def make_image_data(data):
 
 if __name__ == "__main__":
     db = "image"
-    input_dir = "../images"
+    # input_dir = "../images"
+    input_dir = "../output_00/982/[[]982[]][[]2015-06-14[]]22-00-23-00/car/"
+
     output_dir = "output"
     option = None
 
@@ -226,28 +231,28 @@ if __name__ == "__main__":
         input_dim = img_width * img_height * img_channels
         data = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, option), (img_width, img_height)))
 
-    make_image_data(data)
-
-    pretrain.main(db, {
-        'n_layer': [4],
-        'dim': [input_dim, 500, 500, 2000, 10],
-        'drop': [0.0],
-        'rate': [0.1],
-        'step': [20000],
-        'iter': [100000],
-        'decay': [0.0000]
-    })
-
-    pretrain.pretrain_main(db, {
-        'dim': [input_dim, 500, 500, 2000, 10],
-        'pt_iter': [50000],
-        'drop': [0.2],
-        'rate': [0.1],
-        'step': [20000],
-        'iter': [100000],
-        'decay': [0.0000]
-    })
-
-    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+    # make_image_data(data)
+    #
+    # pretrain.main(db, {
+    #     'n_layer': [4],
+    #     'dim': [input_dim, 500, 500, 2000, 10],
+    #     'drop': [0.0],
+    #     'rate': [0.1],
+    #     'step': [20000],
+    #     'iter': [100000],
+    #     'decay': [0.0000]
+    # })
+    #
+    # pretrain.pretrain_main(db, {
+    #     'dim': [input_dim, 500, 500, 2000, 10],
+    #     'pt_iter': [50000],
+    #     'drop': [0.2],
+    #     'rate': [0.1],
+    #     'step': [20000],
+    #     'iter': [100000],
+    #     'decay': [0.0000]
+    # })
+    #
+    # os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
 
     DisKmeans(data)
