@@ -14,6 +14,8 @@ import shutil
 import time
 from glob import glob
 
+import json
+
 def load_mnist(root, training):
     if training:
         data = 'train-images-idx3-ubyte'
@@ -54,7 +56,7 @@ def make_mnist_data():
     dec.write_db(X3,Y3, 'mnist_total')
 
 
-def DisKmeans(data):
+def DisKmeans(data, frames_file):
     db = "image"
     update_interval=160
 
@@ -180,12 +182,32 @@ device_id: 0"""%update_interval
         iters += 1
         seek = (seek + train_batch_size*update_interval)%N
 
+    if os.path.isfile(frames_file):
+        with open(frames_file) as in_file:
+            json_lines = in_file.readlines()
+            json_lines = [json.loads(x) for x in json_lines]
+    else:
+        json_lines = [{}] * N
+
     file_list = sorted(glob(path.join(input_dir, "*")))
-    print(file_list)
     for idx, pred in enumerate(Y_pred):
         filename = os.path.basename(file_list[idx])
         shutil.copyfile(file_list[idx], path.join(output_dir, "group%04d" % pred, filename))
+
+        name_segs = path.splitext(filename)[0].split("_")
+        frame_num = int(name_segs[1])
+        obj_num = int(name_segs[3])
+
+        tag_item = json_lines[frame_num - 1]["tag"][obj_num - 1]
+        tag_item["cluster"] = chr(ord('A') + pred)
+        tag_item["object_filename"] = filename
+
         print(filename, "->", pred)
+
+    with open(frames_file.replace("frame.txt", "cluster.txt"), "w") as out_file:
+        for line in json_lines:
+            out_file.write(json.dumps(line, sort_keys=True))
+            out_file.write("\n")
 
 
 def make_image_data(data):
@@ -209,7 +231,12 @@ def make_image_data(data):
 if __name__ == "__main__":
     db = "image"
     # input_dir = "../images"
-    input_dir = "../output_00/982/[[]982[]][[]2015-06-14[]]22-00-23-00/car/"
+    # input_dir = "../output_00/982/[[]982[]][[]2015-09-21[]]13-00-14-00/car/"
+    data_path = "../output_00/15/15_Evening_1"
+    target = "car"
+
+    input_dir = path.join(data_path, target)
+    frames_file = path.join(data_path, "frame.txt")
 
     output_dir = "output"
     option = None
@@ -255,4 +282,4 @@ if __name__ == "__main__":
     #
     # os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
 
-    DisKmeans(data)
+    DisKmeans(data, frames_file)
