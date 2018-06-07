@@ -58,7 +58,7 @@ option = cv2.IMREAD_COLOR
 
 blank_image = [[[0., 0., 127.]] * 50] * 50 if option == cv2.IMREAD_COLOR else [[127.] * 50] * 50
 
-output_dir = "output"
+output_dir = "output_982_03"
 group_dirs = sorted(glob(path.join(output_dir, "group*")))
 group_cnt = len(group_dirs)
 
