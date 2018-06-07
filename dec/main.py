@@ -210,10 +210,14 @@ device_id: 0"""%update_interval
             out_file.write("\n")
 
 
-def make_image_data(data):
+def make_image_data(data, db="image"):
+    db_train = "{}_train".format(db)
+    db_test = "{}_test".format(db)
+    db_total = "{}_total".format(db)
+
     X = np.asarray(data[:-1]).astype(np.float64) / 255.0
     Y = np.asarray([0] * len(data[:-1]))
-    dec.write_db(X, Y, 'image_train')
+    dec.write_db(X, Y, db_train)
 
     X_, Y_ = dec.read_db('image_train', True)
     assert np.abs((X - X_)).mean() < 1e-5
@@ -221,11 +225,11 @@ def make_image_data(data):
 
     X2 = np.asarray(data[-1:]).astype(np.float64) / 255.0
     Y2 = np.asarray([0] * len(data[-1:]))
-    dec.write_db(X2, Y2, 'image_test')
+    dec.write_db(X2, Y2, db_test)
 
     X3 = np.concatenate((X,X2), axis=0)
     Y3 = np.concatenate((Y,Y2), axis=0)
-    dec.write_db(X3, Y3, 'image_total')
+    dec.write_db(X3, Y3, db_total)
 
 
 if __name__ == "__main__":
@@ -258,7 +262,7 @@ if __name__ == "__main__":
         input_dim = img_width * img_height * img_channels
         data = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, option), (img_width, img_height)))
 
-    # make_image_data(data)
+    # make_image_data(data, db)
     #
     # pretrain.main(db, {
     #     'n_layer': [4],
