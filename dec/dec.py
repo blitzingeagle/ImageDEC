@@ -573,7 +573,7 @@ def update_db(seek, N, X, Y, fname):
       db.Put('{:08}'.format((i+seek)%N), caffe.io.array_to_datum(x, int(Y[i])).SerializeToString())
     del db
 
-def extract_feature(net, model, blobs, N, train = False, device = None):
+def extract_feature(net, model, blobs, N, train=False, device=None):
   if type(net) is str:
     if train:
       caffe.Net.set_phase_train()
