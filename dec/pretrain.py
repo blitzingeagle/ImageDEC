@@ -9,10 +9,11 @@ import caffe
 import scipy.io
 import dec
 
+
 def main(db, params):
     n_layer = params['n_layer'][0]
     drop = params['drop'][0]
-    encoder_layers = [ ('data', ('data','label',db+'_train', db+'_test', 1.0)) ]
+    encoder_layers = [ ('data', ('data','label', db+'_train', db+'_test', 1.0)) ]
     decoder_layers = [ ('euclid', ('pt_loss', 'd_data', 'data')) ]
     last_dim = params['dim'][0]
     niter = params['iter'][0]
@@ -73,7 +74,7 @@ snapshot_prefix: "exp/{4}/save"
 snapshot_after_train:true
 solver_mode: GPU
 debug_info: false
-device_id: 0""".format(rate, params['step'][0], niter, params['decay'][0],db ))
+device_id: 0""".format(rate, params['step'][0], niter, params['decay'][0], db))
 
 
 
@@ -151,8 +152,9 @@ device_id: 0""".format(rate, params['step'][0], params['pt_iter'][0], params['de
 
         net.save('stack_init.caffemodel')
 
-        os.system('caffe train --solver=pt_solver.prototxt --weights=stack_init.caffemodel')
-        print "Finish OS call"
+        os.system("mkdir -p " + 'exp/' + db)
+        while not os.system('caffe train --solver=pt_solver.prototxt --weights=stack_init.caffemodel') == 0:
+            None
 
         net = caffe.Net('stack_net.prototxt', 'exp/'+db+'/save_iter_%d.caffemodel'%params['pt_iter'][0])
         w_down.append(net.params['d_'+str_x][0].data.copy())
@@ -171,12 +173,10 @@ device_id: 0""".format(rate, params['step'][0], params['pt_iter'][0], params['de
 
 
 
-
-
 if __name__ == '__main__':
-    db = 'mnist'        # Database name
+    db = 'mnist2'        # Database name
     input_dim = 784     # Dimension for input images (28x28=784)
-    dec.make_mnist_data()   # Prepare database for initial training
+    dec.make_mnist_data(db)   # Prepare database for initial training
 
     print main(db, {
         'n_layer': [4],
