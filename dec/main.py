@@ -56,10 +56,7 @@ def make_mnist_data():
     dec.write_db(X3,Y3, 'mnist_total')
 
 
-def DisKmeans(data, frames_file):
-    db = "image"
-    update_interval=160
-
+def DisKmeans(data, frames_file, target, db="image", update_interval=160):
     from sklearn.cluster import KMeans
     from sklearn.mixture import GMM
     from sklearn.lda import LDA
@@ -205,12 +202,18 @@ device_id: 0"""%update_interval
         print(filename, "->", pred)
 
     with open(frames_file.replace("frame.txt", "cluster.txt"), "w") as out_file:
+        # Filter content
+        tag_keys = ["top", "bot", "left", "right", "cluster", "object_filename", target]
         for line in json_lines:
-            out_file.write(json.dumps(line, sort_keys=True))
-            out_file.write("\n")
+            line["tag"] = [{key:tag[key] for key in tag_keys if key in tag} for (idx, tag) in enumerate(line["tag"]) if target in tag.keys()]
+
+            if len(line["tag"]) > 0:
+                out_file.write(json.dumps(line, sort_keys=True))
+                out_file.write("\n")
 
 
-def make_image_data(data, db="image"):
+
+def make_data(data, db="image"):
     db_train = "{}_train".format(db)
     db_test = "{}_test".format(db)
     db_total = "{}_total".format(db)
@@ -219,7 +222,7 @@ def make_image_data(data, db="image"):
     Y = np.asarray([0] * len(data[:-1]))
     dec.write_db(X, Y, db_train)
 
-    X_, Y_ = dec.read_db('image_train', True)
+    X_, Y_ = dec.read_db(db_train, True)
     assert np.abs((X - X_)).mean() < 1e-5
     assert (Y != Y_).sum() == 0
 
@@ -233,10 +236,9 @@ def make_image_data(data, db="image"):
 
 
 if __name__ == "__main__":
-    db = "image"
+    db = "image2"
     # input_dir = "../images"
-    # input_dir = "../output_00/982/[[]982[]][[]2015-09-21[]]13-00-14-00/car/"
-    data_path = "../output_00/15/15_Evening_1"
+    data_path = "../output_00/15/15_Evening_1/"
     target = "car"
 
     input_dir = path.join(data_path, target)
@@ -254,36 +256,34 @@ if __name__ == "__main__":
         data1 = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, cv2.IMREAD_COLOR), (img_width, img_height)))
         data2 = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
         data = np.hstack([data1,data2])
-        print(len(data1))
-        print(len(data2))
         print(data.shape)
     else:
         img_channels = 3 if option == cv2.IMREAD_COLOR else 1
         input_dim = img_width * img_height * img_channels
         data = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, option), (img_width, img_height)))
 
-    # make_image_data(data, db)
-    #
-    # pretrain.main(db, {
-    #     'n_layer': [4],
-    #     'dim': [input_dim, 500, 500, 2000, 10],
-    #     'drop': [0.0],
-    #     'rate': [0.1],
-    #     'step': [20000],
-    #     'iter': [100000],
-    #     'decay': [0.0000]
-    # })
-    #
-    # pretrain.pretrain_main(db, {
-    #     'dim': [input_dim, 500, 500, 2000, 10],
-    #     'pt_iter': [50000],
-    #     'drop': [0.2],
-    #     'rate': [0.1],
-    #     'step': [20000],
-    #     'iter': [100000],
-    #     'decay': [0.0000]
-    # })
-    #
-    # os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+    make_data(data, db)
 
-    DisKmeans(data, frames_file)
+    pretrain.main(db, {
+        'n_layer': [4],
+        'dim': [input_dim, 500, 500, 2000, 10],
+        'drop': [0.0],
+        'rate': [0.1],
+        'step': [20000],
+        'iter': [100000],
+        'decay': [0.0000]
+    })
+
+    pretrain.pretrain_main(db, {
+        'dim': [input_dim, 500, 500, 2000, 10],
+        'pt_iter': [50000],
+        'drop': [0.2],
+        'rate': [0.1],
+        'step': [20000],
+        'iter': [100000],
+        'decay': [0.0000]
+    })
+
+    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+
+    DisKmeans(data, frames_file, target, db=db)
