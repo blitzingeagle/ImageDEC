@@ -9,7 +9,6 @@ import cv2
 import numpy as np
 
 import os
-import os.path as path
 import shutil
 import time
 from glob import glob
@@ -197,9 +196,12 @@ device_id: 0"""%update_interval
 
 
 def make_data(data, db="image"):
-    db_train = "{}_train".format(db)
-    db_test = "{}_test".format(db)
-    db_total = "{}_total".format(db)
+    db_path = os.path.join("modules", db, "database")
+    os.system("mkdir -p " + db_path)
+
+    db_train = os.path.join(db_path, "train")
+    db_test = os.path.join(db_path, "test")
+    db_total = os.path.join(db_path, "total")
 
     X = np.asarray(data[:-1]).astype(np.float64) / 255.0
     Y = np.asarray([0] * len(data[:-1]))
@@ -219,12 +221,12 @@ def make_data(data, db="image"):
 
 
 if __name__ == "__main__":
-    db = "image3"
+    db = "image"
     data_path = "../output_00/15/15_Evening_1/"
     target = "car"
 
-    input_dir = path.join(data_path, target)
-    frames_file = path.join(data_path, "frame.txt")
+    input_dir = os.path.join(data_path, target)
+    frames_file = os.path.join(data_path, "frame.txt")
 
     output_dir = "output"
     option = None
