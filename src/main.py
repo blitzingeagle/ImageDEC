@@ -15,28 +15,6 @@ from glob import glob
 
 import json
 
-def load_mnist(root, training):
-    if training:
-        data = 'train-images-idx3-ubyte'
-        label = 'train-labels-idx1-ubyte'
-        N = 60000
-    else:
-        data = 't10k-images-idx3-ubyte'
-        label = 't10k-labels-idx1-ubyte'
-        N = 10000
-    with open(root+data, 'rb') as fin:
-        fin.seek(16, os.SEEK_SET)
-        X = np.fromfile(fin, dtype=np.uint8).reshape((N,28*28))
-        # for x in X:
-        #     x = x.reshape((28,28))
-        #     cv2.imshow("mnist", x)
-        #     if cv2.waitKey(1) & 0xFF == ord('q'):
-        #         break
-    with open(root+label, 'rb') as fin:
-        fin.seek(8, os.SEEK_SET)
-        Y = np.fromfile(fin, dtype=np.uint8)
-    return X, Y
-
 
 def DisKmeans(data, frames_file, target, db="image", update_interval=160):
     from sklearn.cluster import KMeans
@@ -51,22 +29,15 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
     N_class = 5
     batch_size = 100
     train_batch_size = 256
-    # X, Y = dec.read_db(db+'_total', True)
-    # X = np.asarray(X, dtype=np.float64)
-    # Y = np.asarray(np.squeeze(Y), dtype = np.int32)
+
     X = np.asarray(data)
     Y = np.zeros(len(data))
     N = X.shape[0]
-    # img = np.clip((X/0.02), 0, 255).astype(np.uint8).reshape((N, 28, 28, 1))
-
-    print(X.shape)
-    print(Y.shape)
-    print(N)
 
     tmm_alpha = 1.0
     total_iters = (N-1)/train_batch_size+1
     if not update_interval:
-      update_interval = total_iters
+        update_interval = total_iters
     Y_pred = np.zeros((Y.shape[0]))
     iters = 0
     seek = 0
@@ -74,16 +45,7 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
 
     acc_list = []
 
-    output_dir = "output"
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
-    for class_idx in range(N_class):
-        group_dir = os.path.join(output_dir, "group%04d" % class_idx)
-        os.makedirs(group_dir)
-
-    while iters < 1:
-        # raw_input("Iteration %d" % iters)
+    while True:
         dec.write_net(db, dim, N_class, "'{:08}'".format(0))
         if iters == 0:
             dec.write_db(np.zeros((N,N_class)), np.zeros((N,)), 'train_weight')
@@ -103,27 +65,17 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
             gmm_model.cluster_centers_ = net.params['loss'][0].data[0,0,:,:].T
 
 
-        gmm_model.fit(X)
         Y_pred_last = Y_pred
-        Y_pred = gmm_model.predict(X).squeeze()
-        # Y_pred = gmm_model.predict(feature).squeeze()
+        Y_pred = gmm_model.predict(feature).squeeze()
         print(Y_pred)
-        # acc, freq = dec.cluster_acc(Y_pred, Y)
-        # acc_list.append(acc)
-        # nmi = normalized_mutual_info_score(Y, Y_pred)
-        # print(freq)
-        # print(freq.sum(axis=1))
-        # print('acc: ', acc, 'nmi: ', nmi)
+
         print((Y_pred != Y_pred_last).sum()*1.0/N)
         if (Y_pred != Y_pred_last).sum() < 0.001*N:
             break
-        #     print(acc_list)
-        #     return (acc, nmi)
         time.sleep(1)
 
         dec.write_net(db, dim, N_class, "'{:08}'".format(seek))
-        weight = gmm_model.transform(X)
-        # weight = gmm_model.transform(feature)
+        weight = gmm_model.transform(feature)
 
         weight = (weight.T/weight.sum(axis=1)).T
         bias = (1.0/weight.sum(axis=0))
@@ -160,6 +112,15 @@ device_id: 0"""%update_interval
 
         iters += 1
         seek = (seek + train_batch_size*update_interval)%N
+
+    # Processing files
+    output_dir = "output"
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+        os.makedirs(output_dir)
+    for class_idx in range(N_class):
+        group_dir = os.path.join(output_dir, "group%04d" % class_idx)
+        os.makedirs(group_dir)
 
     if os.path.isfile(frames_file):
         with open(frames_file) as in_file:
@@ -222,12 +183,11 @@ def make_data(data, db="image"):
 
 if __name__ == "__main__":
     db = "image"
+
     data_path = "../output_00/15/15_Evening_1/"
     target = "car"
-
     input_dir = os.path.join(data_path, target)
     frames_file = os.path.join(data_path, "frame.txt")
-
     output_dir = "output"
     option = None
 
@@ -246,30 +206,33 @@ if __name__ == "__main__":
         input_dim = img_width * img_height * img_channels
         data = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, option), (img_width, img_height)))
 
-    make_data(data, db)
+    mod_path = os.path.join("modules", db)
+    os.system("mkdir -p " + mod_path)
 
-    pretrain.main(db, {
-        'n_layer': [4],
-        'dim': [input_dim, 500, 500, 2000, 10],
-        'drop': [0.0],
-        'rate': [0.1],
-        'step': [20000],
-        'iter': [100000],
-        'decay': [0.0000]
-    })
+    if not os.path.exists(mod_path):
+        make_data(data, db)
 
-    pretrain.pretrain_main(db, {
-        'dim': [input_dim, 500, 500, 2000, 10],
-        'pt_iter': [50000],
-        'drop': [0.2],
-        'rate': [0.1],
-        'step': [20000],
-        'iter': [100000],
-        'decay': [0.0000]
-    })
+        pretrain.main(db, {
+            'n_layer': [4],
+            'dim': [input_dim, 500, 500, 2000, 10],
+            'drop': [0.0],
+            'rate': [0.1],
+            'step': [20000],
+            'iter': [100000],
+            'decay': [0.0000]
+        })
 
-    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+        pretrain.pretrain_main(db, {
+            'dim': [input_dim, 500, 500, 2000, 10],
+            'pt_iter': [50000],
+            'drop': [0.2],
+            'rate': [0.1],
+            'step': [20000],
+            'iter': [100000],
+            'decay': [0.0000]
+        })
 
-    os.system("mv -t {} pt_net.prototxt ft_solver.prototxt stack_net.prototxt pt_solver.prototxt stack_init.caffemodel stack_init_final.caffemodel".format(mod_path))
+        os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+        os.system("mv -t {} pt_net.prototxt ft_solver.prototxt stack_net.prototxt pt_solver.prototxt stack_init.caffemodel stack_init_final.caffemodel".format(mod_path))
 
     DisKmeans(data, frames_file, target, db=db)

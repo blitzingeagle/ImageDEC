@@ -482,24 +482,27 @@ def extract_feature(net, model, blobs, N, train=False, device=None):
   return res, net
 
 def write_net(db, dim, n_class, seek):
-  layers = [ ('data_seek', ('data','dummy',db+'_total', db+'_total', 1.0, seek)),
-             ('data_seek', ('label', 'dummy', 'train_weight', 'train_weight', 1.0, seek)),
+    db_total = os.path.join("modules", db, "database", "total")
+    layers = [
+        ('data_seek', ('data','dummy', db_total, db_total, 1.0, seek)),
+        ('data_seek', ('label', 'dummy', 'train_weight', 'train_weight', 1.0, seek)),
 
-             ('inner', ('inner1', 'data', 500)),
-             ('relu', ('inner1',)),
+        ('inner', ('inner1', 'data', 500)),
+        ('relu', ('inner1',)),
 
-             ('inner', ('inner2', 'inner1', 500)),
-             ('relu', ('inner2',)),
+        ('inner', ('inner2', 'inner1', 500)),
+        ('relu', ('inner2',)),
 
-             ('inner', ('inner3', 'inner2', 2000)),
-             ('relu', ('inner3',)),
+        ('inner', ('inner3', 'inner2', 2000)),
+        ('relu', ('inner3',)),
 
-             ('inner', ('output', 'inner3', dim)),
+        ('inner', ('output', 'inner3', dim)),
 
-             ('tloss', ('loss', 'output', 'label', n_class))
-          ]
-  with open('net.prototxt', 'w') as fnet:
-    make_net(fnet, layers)
+        ('tloss', ('loss', 'output', 'label', n_class))
+    ]
+
+    with open('net.prototxt', 'w') as fnet:
+        make_net(fnet, layers)
 
 def DisKmeans(db, update_interval = None):
     from sklearn.cluster import KMeans

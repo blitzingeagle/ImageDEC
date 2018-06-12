@@ -7,15 +7,18 @@ import dec
 import numpy as np
 import caffe
 import scipy.io
-import dec
+import shutil
 
 
-def main(db, params):
+# Creates pt_net.prototxt and ft_solver.prototxt
+def define_solver(db, params):
     n_layer = params['n_layer'][0]
     drop = params['drop'][0]
 
-    db_path = os.path.join("modules", db, "database")
-    exp_path = os.path.join("modules", db, "exp")
+    mod_path = os.path.join("modules", db)
+    db_path = os.path.join(mod_path, "database")
+    exp_path = os.path.join(mod_path, "exp")
+    save_prefix = exp_path + "/save"
 
     encoder_layers = [ ('data', ('data','label', os.path.join(db_path, "train"), os.path.join(db_path, "test"), 1.0)) ]
     decoder_layers = [ ('euclid', ('pt_loss', 'd_data', 'data')) ]
@@ -57,40 +60,28 @@ def main(db, params):
 
                 ])
         last_dim = dim
-    with open('pt_net.prototxt', 'w') as fnet:
+    with open(os.path.join(mod_path, "pt_net.prototxt"), 'w') as fnet:
         dec.make_net(fnet, encoder_layers+decoder_layers[::-1])
 
-    with open('ft_solver.prototxt', 'w') as fsolver:
-        fsolver.write("""net: "pt_net.prototxt"
-base_lr: {0}
-lr_policy: "step"
-gamma: 0.1
-stepsize: {1}
-display: 1000
-test_iter: 100
-test_interval: 10000
-max_iter: {2}
-momentum: 0.9
-momentum_burnin: 1000
-weight_decay: {3}
-snapshot: 10000
-snapshot_prefix: "{4}/save"
-snapshot_after_train:true
-solver_mode: GPU
-debug_info: false
-device_id: 0""".format(rate, params['step'][0], niter, params['decay'][0], exp_path))
+    with open(os.path.join(mod_path, "ft_solver.prototxt"), 'w') as fsolver:
+        template = ""
+        with open("templates/ft_solver_template.txt", "r") as template_file:
+            template = template_file.read()
+        fsolver.write(template.format(mod_path, rate, params['step'][0], niter, params['decay'][0], save_prefix))
 
 
-
-def pretrain_main(db, params):
+def initialize_model(db, params):
     dim = params['dim']
     n_layer = len(dim)-1
 
     w_down = []
     b_down = []
 
-    db_path = os.path.join("modules", db, "database")
-    exp_path = os.path.join("modules", db, "exp")
+    mod_path = os.path.join("modules", db)
+    db_path = os.path.join(mod_path, "database")
+    exp_path = os.path.join(mod_path, "exp")
+    save_prefix = exp_path + "/save"
+
     for i in xrange(n_layer):
         rate = params['rate'][0]
         layers = [ ('data', ('data','label', os.path.join(db_path, "train"), os.path.join(db_path, "test"), 1.0)) ]
@@ -126,49 +117,35 @@ def pretrain_main(db, params):
         else:
             layers.append(('euclid', ('pt_loss%d'%(i+1), 'd_'+str_x, str_x)))
 
-        with open('stack_net.prototxt', 'w') as fnet:
+        with open(os.path.join(mod_path, "stack_net.prototxt"), 'w') as fnet:
             dec.make_net(fnet, layers)
 
-        with open('pt_solver.prototxt', 'w') as fsolver:
-            fsolver.write("""net: "stack_net.prototxt"
-base_lr: {0}
-lr_policy: "step"
-gamma: 0.1
-stepsize: {1}
-display: 1000
-test_iter: 100
-test_interval: 10000
-max_iter: {2}
-momentum: 0.9
-momentum_burnin: 1000
-weight_decay: {3}
-snapshot: 10000
-snapshot_prefix: "{4}/save"
-snapshot_after_train:true
-solver_mode: GPU
-debug_info: false
-device_id: 0""".format(rate, params['step'][0], params['pt_iter'][0], params['decay'][0], exp_path))
+        with open(os.path.join(mod_path, "pt_solver.prototxt"), 'w') as fsolver:
+            template = ""
+            with open("templates/pt_solver_template.txt", 'r') as template_file:
+                template = template_file.read()
+            fsolver.write(template.format(mod_path, rate, params['step'][0], params['pt_iter'][0], params['decay'][0], save_prefix))
 
         if i > 0:
-            model = exp_path + '/save_iter_%d.caffemodel'%params['pt_iter'][0]
+            model = save_prefix + '_iter_%d.caffemodel'%params['pt_iter'][0]
         else:
             model = None
 
-        mean, net = dec.extract_feature('stack_net.prototxt', model,
+        mean, net = dec.extract_feature(os.path.join(mod_path, "stack_net.prototxt"), model,
                                         [str_x], 1, train=True, device=0)
 
-        net.save('stack_init.caffemodel')
+        net.save(os.path.join(mod_path, "stack_init.caffemodel"))
 
         os.system("mkdir -p " + exp_path)
-        if not os.system('caffe train --solver=pt_solver.prototxt --weights=stack_init.caffemodel') == 0:
+        if not os.system("caffe train --solver={0} --weights={1}".format(os.path.join(mod_path, "pt_solver.prototxt"), os.path.join(mod_path, "stack_init.caffemodel"))) == 0:
             print("Caffe failed")
 
-        net = caffe.Net('stack_net.prototxt', exp_path + '/save_iter_%d.caffemodel'%params['pt_iter'][0])
+        net = caffe.Net(os.path.join(mod_path, "stack_net.prototxt"), save_prefix + '_iter_%d.caffemodel'%params['pt_iter'][0])
         w_down.append(net.params['d_'+str_x][0].data.copy())
         b_down.append(net.params['d_'+str_x][1].data.copy())
         del net
 
-    net = caffe.Net('pt_net.prototxt', exp_path + '/save_iter_%d.caffemodel'%params['pt_iter'][0])
+    net = caffe.Net(os.path.join(mod_path, "pt_net.prototxt"), save_prefix + '_iter_%d.caffemodel'%params['pt_iter'][0])
     for i in xrange(n_layer):
         if i == 0:
             k = 'd_data'
@@ -176,36 +153,51 @@ device_id: 0""".format(rate, params['step'][0], params['pt_iter'][0], params['de
             k = 'd_inner%d'%i
         net.params[k][0].data[...] = w_down[i]
         net.params[k][1].data[...] = b_down[i]
-    net.save('stack_init_final.caffemodel')
+    net.save(os.path.join(mod_path, "stack_init_final.caffemodel"))
 
+
+def export_model(db, iters, dest="ft_export.caffemodel"):
+    mod_path = os.path.join("modules", db)
+    save_prefix = os.path.join(mod_path, "exp") + "/save"
+
+    os.system("caffe train --solver={0} --weights={1}".format(os.path.join(mod_path, "ft_solver.prototxt"), os.path.join(mod_path, "stack_init_final.caffemodel")))
+
+    net = caffe.Net(os.path.join(mod_path, "pt_net.prototxt"), save_prefix + '_iter_%d.caffemodel'%iters)
+    net.save(os.path.join(mod_path, dest))
 
 
 if __name__ == '__main__':
-    db = 'mnist'        # Database name
-    mod_path = os.path.join("modules", db)
+    db = "mnist5"       # Database name
     input_dim = 784     # Dimension for input images (28x28=784)
-    dec.make_mnist_data(db)   # Prepare database for initial training
+    iters = 100000
 
-    print main(db, {
-        'n_layer': [4],
-        'dim': [input_dim, 500, 500, 2000, 10],
-        'drop': [0.0],
-        'rate': [0.1],
-        'step': [20000],
-        'iter': [100000],
-        'decay': [0.0000]
-    })
+    mod_path = os.path.join("modules", db)
+    os.system("mkdir -p " + mod_path)
 
-    print pretrain_main(db, {
-        'dim': [input_dim, 500, 500, 2000, 10],
-        'pt_iter': [50000],
-        'drop': [0.2],
-        'rate': [0.1],
-        'step': [20000],
-        'iter': [100000],
-        'decay': [0.0000]
-    })
+    if not os.path.exists(os.path.join(mod_path, "database")):
+        dec.make_mnist_data(db)   # Prepare database for initial training
 
-    os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
+    if not os.path.exists(os.path.join(mod_path, "pt_net.prototxt")) or not os.path.exists(os.path.join(mod_path, "ft_solver.prototxt")):
+        define_solver(db, {
+            'n_layer': [4],
+            'dim': [input_dim, 500, 500, 2000, 10],
+            'drop': [0.0],
+            'rate': [0.1],
+            'step': [20000],
+            'iter': [iters],
+            'decay': [0.0000]
+        })
 
-    os.system("mv -t {} pt_net.prototxt ft_solver.prototxt stack_net.prototxt pt_solver.prototxt stack_init.caffemodel stack_init_final.caffemodel".format(mod_path))
+    if not os.path.exists(os.path.join(mod_path, "stack_init_final.caffemodel")):
+        initialize_model(db, {
+            'dim': [input_dim, 500, 500, 2000, 10],
+            'pt_iter': [50000],
+            'drop': [0.2],
+            'rate': [0.1],
+            'step': [20000],
+            'iter': [iters],
+            'decay': [0.0000]
+        })
+
+    if not os.path.exists(os.path.join(mod_path, "ft_export.caffemodel")):
+        export_model(db, iters)
