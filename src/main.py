@@ -16,6 +16,31 @@ from glob import glob
 import json
 
 
+def make_data(data, db="image"):
+    db_path = os.path.join("modules", db, "database")
+    os.system("mkdir -p " + db_path)
+
+    db_train = os.path.join(db_path, "train")
+    db_test = os.path.join(db_path, "test")
+    db_total = os.path.join(db_path, "total")
+
+    X = np.asarray(data[:-1]).astype(np.float64) / 255.0
+    Y = np.asarray([0] * len(data[:-1]))
+    dec.write_db(X, Y, db_train)
+
+    X_, Y_ = dec.read_db(db_train, True)
+    assert np.abs((X - X_)).mean() < 1e-5
+    assert (Y != Y_).sum() == 0
+
+    X2 = np.asarray(data[-1:]).astype(np.float64) / 255.0
+    Y2 = np.asarray([0] * len(data[-1:]))
+    dec.write_db(X2, Y2, db_test)
+
+    X3 = np.concatenate((X,X2), axis=0)
+    Y3 = np.concatenate((Y,Y2), axis=0)
+    dec.write_db(X3, Y3, db_total)
+
+
 def DisKmeans(data, frames_file, target, db="image", update_interval=160):
     from sklearn.cluster import KMeans
     from sklearn.mixture import GMM
@@ -25,6 +50,13 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
     from scipy.spatial.distance import cdist
     import cPickle
     from scipy.io import loadmat
+
+    mod_path = os.path.join("modules", db)
+    net_proto = os.path.join(mod_path, "net.prototxt")
+    init_model = os.path.join(mod_path, "init.caffemodel")
+    train_weight = os.path.join(mod_path, "train_weight")
+    solver_proto = os.path.join(mod_path, "solver.prototxt")
+    test_prefix = os.path.join(mod_path, "exp") + "/test"
 
     N_class = 5
     batch_size = 100
@@ -47,19 +79,18 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
 
     while True:
         dec.write_net(db, dim, N_class, "'{:08}'".format(0))
+
         if iters == 0:
-            dec.write_db(np.zeros((N,N_class)), np.zeros((N,)), 'train_weight')
-            ret, net = dec.extract_feature('net.prototxt', 'exp/'+db+'/save_iter_50000.caffemodel', ['output'], N, True, 0)
+            dec.write_db(np.zeros((N,N_class)), np.zeros((N,)), train_weight)
+            ret, net = dec.extract_feature(net_proto, os.path.join(mod_path, "ft_export.caffemodel"), ['output'], N, True, 0)
             feature = ret[0].squeeze()
-            print("Feature shape", feature.shape)
 
             gmm_model = dec.TMM(N_class)
             gmm_model.fit(feature)
-            # gmm_model.fit(X)
             net.params['loss'][0].data[0,0,:,:] = gmm_model.cluster_centers_.T
             net.params['loss'][1].data[0,0,:,:] = 1.0/gmm_model.covars_.T
         else:
-            ret, net = dec.extract_feature('net.prototxt', 'init.caffemodel', ['output'], N, True, 0)
+            ret, net = dec.extract_feature(net_proto, init_model, ['output'], N, True, 0)
             feature = ret[0].squeeze()
 
             gmm_model.cluster_centers_ = net.params['loss'][0].data[0,0,:,:].T
@@ -83,32 +114,19 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
         weight = (weight**2)*bias
         weight = (weight.T/weight.sum(axis=1)).T
         print(weight[:10,:])
-        dec.write_db(weight, np.zeros((weight.shape[0],)), 'train_weight')
+        dec.write_db(weight, np.zeros((weight.shape[0],)), train_weight)
 
-        net.save('init.caffemodel')
+        net.save(init_model)
         del net
 
-        with open('solver.prototxt', 'w') as fsolver:
-            fsolver.write(
-"""net: "net.prototxt"
-base_lr: 0.01
-lr_policy: "step"
-gamma: 0.1
-stepsize: 100000
-display: 10
-max_iter: %d
-momentum: 0.9
-weight_decay: 0.0000
-snapshot: 100
-snapshot_prefix: "exp/test/save"
-snapshot_after_train:true
-solver_mode: GPU
-debug_info: false
-sample_print: false
-device_id: 0"""%update_interval
-            )
-        os.system('caffe train --solver=solver.prototxt --weights=init.caffemodel')
-        shutil.copyfile('exp/test/save_iter_%d.caffemodel'%update_interval, 'init.caffemodel')
+        with open(solver_proto, 'w') as fsolver:
+            template = ""
+            with open("templates/solver_template.txt", "r") as template_file:
+                template = template_file.read()
+            fsolver.write(template.format(net_proto, update_interval, test_prefix))
+
+        os.system('caffe train --solver={0} --weights={1}'.format(solver_proto, init_model))
+        shutil.copyfile(test_prefix + '_iter_%d.caffemodel'%update_interval, init_model)
 
         iters += 1
         seek = (seek + train_batch_size*update_interval)%N
@@ -155,42 +173,18 @@ device_id: 0"""%update_interval
                 out_file.write("\n")
 
 
-
-def make_data(data, db="image"):
-    db_path = os.path.join("modules", db, "database")
-    os.system("mkdir -p " + db_path)
-
-    db_train = os.path.join(db_path, "train")
-    db_test = os.path.join(db_path, "test")
-    db_total = os.path.join(db_path, "total")
-
-    X = np.asarray(data[:-1]).astype(np.float64) / 255.0
-    Y = np.asarray([0] * len(data[:-1]))
-    dec.write_db(X, Y, db_train)
-
-    X_, Y_ = dec.read_db(db_train, True)
-    assert np.abs((X - X_)).mean() < 1e-5
-    assert (Y != Y_).sum() == 0
-
-    X2 = np.asarray(data[-1:]).astype(np.float64) / 255.0
-    Y2 = np.asarray([0] * len(data[-1:]))
-    dec.write_db(X2, Y2, db_test)
-
-    X3 = np.concatenate((X,X2), axis=0)
-    Y3 = np.concatenate((Y,Y2), axis=0)
-    dec.write_db(X3, Y3, db_total)
-
-
 if __name__ == "__main__":
     db = "image"
+    iters = 100000
 
+
+    # Image data
     data_path = "../output_00/15/15_Evening_1/"
     target = "car"
     input_dir = os.path.join(data_path, target)
     frames_file = os.path.join(data_path, "frame.txt")
     output_dir = "output"
     option = None
-
     img_width = 50
     img_height = 50
 
@@ -206,33 +200,39 @@ if __name__ == "__main__":
         input_dim = img_width * img_height * img_channels
         data = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, option), (img_width, img_height)))
 
+
     mod_path = os.path.join("modules", db)
     os.system("mkdir -p " + mod_path)
 
-    if not os.path.exists(mod_path):
+
+    # Pretrain
+    if not os.path.exists(os.path.join(mod_path, "database")):
         make_data(data, db)
 
-        pretrain.main(db, {
+    if not os.path.exists(os.path.join(mod_path, "pt_net.prototxt")) or not os.path.exists(os.path.join(mod_path, "ft_solver.prototxt")):
+        pretrain.define_solver(db, {
             'n_layer': [4],
             'dim': [input_dim, 500, 500, 2000, 10],
             'drop': [0.0],
             'rate': [0.1],
             'step': [20000],
-            'iter': [100000],
+            'iter': [iters],
             'decay': [0.0000]
         })
 
-        pretrain.pretrain_main(db, {
+    if not os.path.exists(os.path.join(mod_path, "stack_init_final.caffemodel")):
+        pretrain.initialize_model(db, {
             'dim': [input_dim, 500, 500, 2000, 10],
             'pt_iter': [50000],
             'drop': [0.2],
             'rate': [0.1],
             'step': [20000],
-            'iter': [100000],
+            'iter': [iters],
             'decay': [0.0000]
         })
 
-        os.system("caffe train --solver=ft_solver.prototxt --weights=stack_init_final.caffemodel")
-        os.system("mv -t {} pt_net.prototxt ft_solver.prototxt stack_net.prototxt pt_solver.prototxt stack_init.caffemodel stack_init_final.caffemodel".format(mod_path))
+    if not os.path.exists(os.path.join(mod_path, "ft_export.caffemodel")):
+        pretrain.export_model(db, iters)
+
 
     DisKmeans(data, frames_file, target, db=db)
