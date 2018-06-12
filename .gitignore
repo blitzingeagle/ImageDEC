@@ -24,3 +24,4 @@ reuters/lyrl2004_tokens_train.dat
 reuters/rcv1-v2.topics.qrels
 
 /images
+/output*
