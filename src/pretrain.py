@@ -162,7 +162,7 @@ def export_model(db, iters, dest="ft_export.caffemodel"):
 
     os.system("caffe train --solver={0} --weights={1}".format(os.path.join(mod_path, "ft_solver.prototxt"), os.path.join(mod_path, "stack_init_final.caffemodel")))
 
-    shutil.copyfile(save_prefix + '_iter_%d.caffemodel'%iters, dest)
+    shutil.copyfile(save_prefix + '_iter_%d.caffemodel'%iters, os.path.join(mod_path, dest))
 
 
 if __name__ == '__main__':

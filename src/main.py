@@ -174,7 +174,7 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
 
 
 if __name__ == "__main__":
-    db = "image"
+    db = "image2"
     iters = 100000
 
 
