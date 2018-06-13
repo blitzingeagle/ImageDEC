@@ -199,19 +199,21 @@ if __name__ == "__main__":
     img_width = 30
     img_height = 30
 
-
-    # Image data
     data_path = "../output_00/data/2017-08-16_18-07-18/"
     target = "car"
-    input_dir = os.path.join(data_path, target)
     frames_file = os.path.join(data_path, "frame.txt")
+
+    input_dir = os.path.join(data_path, target)
     output_dir = "output"
     option = None
+
+    image_paths = imgutils.image_paths(input_dir)
+    imageset = imgutils.load_images(image_paths, cv2.IMREAD_COLOR)
 
     if option == None:
         img_channels = 4
         input_dim = img_width * img_height * img_channels
-        data1 = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, cv2.IMREAD_COLOR), (img_width, img_height)))
+        data1 = imgutils.columnize(imgutils.resize_images(imageset, (img_width, img_height)))
         data2 = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
         data = np.hstack([data1,data2])
         print(data.shape)
