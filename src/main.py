@@ -41,7 +41,7 @@ def make_data(data, db="image"):
     dec.write_db(X3, Y3, db_total)
 
 
-def DisKmeans(data, frames_file, target, db="image", dim=10, update_interval=100):
+def DisKmeans(data, target, db="image", dim=10, N_class = 5, update_interval=100):
     from sklearn.cluster import KMeans
     from sklearn.mixture import GMM
     from sklearn.lda import LDA
@@ -58,7 +58,6 @@ def DisKmeans(data, frames_file, target, db="image", dim=10, update_interval=100
     solver_proto = os.path.join(mod_path, "solver.prototxt")
     test_prefix = os.path.join(mod_path, "exp") + "/test"
 
-    N_class = 5
     batch_size = 100
     train_batch_size = 256
 
@@ -100,7 +99,7 @@ def DisKmeans(data, frames_file, target, db="image", dim=10, update_interval=100
         print(Y_pred)
 
         print((Y_pred != Y_pred_last).sum()*1.0/N)
-        if (Y_pred != Y_pred_last).sum() < 0.005*N:
+        if (Y_pred != Y_pred_last).sum() < 0.0075*N:
             break
         time.sleep(1)
 
@@ -131,64 +130,10 @@ def DisKmeans(data, frames_file, target, db="image", dim=10, update_interval=100
         iters += 1
         seek = (seek + train_batch_size*update_interval)%N
 
-    # Processing files
-    output_dir = "output"
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
-        os.makedirs(output_dir)
-    for class_idx in range(N_class):
-        group_dir = os.path.join(output_dir, "group%04d" % class_idx)
-        os.makedirs(group_dir)
+    cluster_centers = gmm_model.cluster_centers_.tolist()
+    transform = transform.tolist()
 
-    if os.path.isfile(frames_file):
-        with open(frames_file) as in_file:
-            json_lines = in_file.readlines()
-            json_lines = [json.loads(x) for x in json_lines]
-    else:
-        json_lines = [{}] * N
-
-    file_list = sorted(glob(os.path.join(input_dir, "*")))
-    for idx, pred in enumerate(Y_pred):
-        filename = os.path.basename(file_list[idx])
-        shutil.copyfile(file_list[idx], os.path.join(output_dir, "group%04d" % pred, filename))
-
-        name_segs = os.path.splitext(filename)[0].split("_")
-        frame_num = int(name_segs[1])
-        obj_num = int(name_segs[3])
-
-        tag_item = json_lines[frame_num - 1]["tag"][obj_num - 1]
-        tag_item["cluster"] = chr(ord('A') + pred)
-        tag_item["object_filename"] = filename
-
-        print(filename, "->", pred)
-
-    with open("cluster_centers.txt", "w") as file:
-        matrix = gmm_model.cluster_centers_.tolist()
-        s = [[str(e) for e in row] for row in matrix]
-        lens = [max(map(len, col)) for col in zip(*s)]
-        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
-        table = [fmt.format(*row) for row in s]
-        file.write('\n'.join(table))
-    with open("transform_dist.txt", "w") as file:
-        matrix = transform.tolist()
-        s = [[str(e) for e in row] for row in matrix]
-        lens = [max(map(len, col)) for col in zip(*s)]
-        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
-        table = [fmt.format(*row) for row in s]
-        file.write('\n'.join(table))
-    # print("Cluster Centers:", gmm_model.cluster_centers_)
-    # print("Transform:", transform.shape)
-
-
-    with open(frames_file.replace("frame.txt", "cluster.txt"), "w") as out_file:
-        # Filter content
-        tag_keys = ["top", "bot", "left", "right", "cluster", "object_filename", target]
-        for line in json_lines:
-            line["tag"] = [{key:tag[key] for key in tag_keys if key in tag} for (idx, tag) in enumerate(line["tag"]) if target in tag.keys()]
-
-            if len(line["tag"]) > 0:
-                out_file.write(json.dumps(line, sort_keys=True))
-                out_file.write("\n")
+    return (Y_pred, cluster_centers, transform)
 
 
 if __name__ == "__main__":
@@ -196,6 +141,7 @@ if __name__ == "__main__":
     db = "image30x30_dim50"
     iters = 100000
     dim = 50
+    N_class = 5
     img_width = 30
     img_height = 30
 
@@ -208,19 +154,18 @@ if __name__ == "__main__":
     option = None
 
     image_paths = imgutils.image_paths(input_dir)
-    imageset = imgutils.load_images(image_paths, cv2.IMREAD_COLOR)
 
     if option == None:
         img_channels = 4
         input_dim = img_width * img_height * img_channels
-        data1 = imgutils.columnize(imgutils.resize_images(imageset, (img_width, img_height)))
-        data2 = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
+        data1 = imgutils.columnize(imgutils.resize_images(imgutils.load_images(image_paths, cv2.IMREAD_COLOR), (img_width, img_height)))
+        data2 = imgutils.columnize(imgutils.resize_images(imgutils.load_images(image_paths, cv2.IMREAD_GRAYSCALE), (img_width, img_height)))
         data = np.hstack([data1,data2])
         print(data.shape)
     else:
         img_channels = 3 if option == cv2.IMREAD_COLOR else 1
         input_dim = img_width * img_height * img_channels
-        data = imgutils.columnize(imgutils.resize_images(imgutils.load_imageset(input_dir, option), (img_width, img_height)))
+        data = imgutils.columnize(imgutils.resize_images(imgutils.load_images(image_paths, option), (img_width, img_height)))
 
 
     mod_path = os.path.join("modules", db)
@@ -257,4 +202,62 @@ if __name__ == "__main__":
         pretrain.export_model(db, iters)
 
 
-    DisKmeans(data, frames_file, target, db=db, dim=dim)
+    (Y_pred, cluster_centers, transform) = DisKmeans(data, target, db=db, dim=dim, N_class=N_class)
+
+    # Processing files
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+        os.makedirs(output_dir)
+    for class_idx in range(N_class):
+        group_dir = os.path.join(output_dir, "group%04d" % class_idx)
+        os.makedirs(group_dir)
+
+    if os.path.isfile(frames_file):
+        with open(frames_file) as in_file:
+            json_lines = in_file.readlines()
+            json_lines = [json.loads(x) for x in json_lines]
+    else:
+        json_lines = [{}] * N
+
+
+    for idx, pred in enumerate(Y_pred):
+        filename = os.path.basename(image_paths[idx])
+        shutil.copyfile(image_paths[idx], os.path.join(output_dir, "group%04d" % pred, filename))
+
+        name_segs = os.path.splitext(filename)[0].split("_")
+        frame_num = int(name_segs[1])
+        obj_num = int(name_segs[3])
+
+        tag_item = json_lines[frame_num - 1]["tag"][obj_num - 1]
+        tag_item["cluster"] = chr(ord('A') + pred)
+        tag_item["object_filename"] = filename
+
+        print(filename, "->", pred)
+
+    with open("cluster_centers.txt", "w") as file:
+        matrix = cluster_centers
+        s = [[str(e) for e in row] for row in matrix]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        file.write('\n'.join(table))
+    with open("transform_dist.txt", "w") as file:
+        matrix = transform
+        s = [[str(e) for e in row] for row in matrix]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        file.write('\n'.join(table))
+    # print("Cluster Centers:", gmm_model.cluster_centers_)
+    # print("Transform:", transform.shape)
+
+
+    with open(frames_file.replace("frame.txt", "cluster.txt"), "w") as out_file:
+        # Filter content
+        tag_keys = ["top", "bot", "left", "right", "cluster", "object_filename", target]
+        for line in json_lines:
+            line["tag"] = [{key:tag[key] for key in tag_keys if key in tag} for (idx, tag) in enumerate(line["tag"]) if target in tag.keys()]
+
+            if len(line["tag"]) > 0:
+                out_file.write(json.dumps(line, sort_keys=True))
+                out_file.write("\n")
