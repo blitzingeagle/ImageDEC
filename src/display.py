@@ -10,6 +10,8 @@ import os
 import os.path as path
 from glob import glob
 
+import sys
+
 img_width = 50
 img_height = 50
 
@@ -22,6 +24,8 @@ option = cv2.IMREAD_COLOR
 blank_image = [[[0., 0., 127.]] * 50] * 50 if option == cv2.IMREAD_COLOR else [[127.] * 50] * 50
 
 output_dir = "output"
+if len(sys.argv) > 1:
+    output_dir = sys.argv[1]
 group_dirs = sorted(glob(path.join(output_dir, "group*")))
 group_cnt = len(group_dirs)
 

@@ -166,9 +166,10 @@ def export_model(db, iters, dest="ft_export.caffemodel"):
 
 
 if __name__ == '__main__':
-    db = "mnist5"       # Database name
+    db = "mnist7"       # Database name
     input_dim = 784     # Dimension for input images (28x28=784)
     iters = 100000
+    dim = 50
 
     mod_path = os.path.join("modules", db)
     os.system("mkdir -p " + mod_path)
@@ -179,7 +180,7 @@ if __name__ == '__main__':
     if not os.path.exists(os.path.join(mod_path, "pt_net.prototxt")) or not os.path.exists(os.path.join(mod_path, "ft_solver.prototxt")):
         define_solver(db, {
             'n_layer': [4],
-            'dim': [input_dim, 500, 500, 2000, 10],
+            'dim': [input_dim, 500, 500, 2000, dim],
             'drop': [0.0],
             'rate': [0.1],
             'step': [20000],
@@ -189,7 +190,7 @@ if __name__ == '__main__':
 
     if not os.path.exists(os.path.join(mod_path, "stack_init_final.caffemodel")):
         initialize_model(db, {
-            'dim': [input_dim, 500, 500, 2000, 10],
+            'dim': [input_dim, 500, 500, 2000, dim],
             'pt_iter': [50000],
             'drop': [0.2],
             'rate': [0.1],

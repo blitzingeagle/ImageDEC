@@ -41,7 +41,7 @@ def make_data(data, db="image"):
     dec.write_db(X3, Y3, db_total)
 
 
-def DisKmeans(data, frames_file, target, db="image", update_interval=160):
+def DisKmeans(data, frames_file, target, db="image", dim=10, update_interval=100):
     from sklearn.cluster import KMeans
     from sklearn.mixture import GMM
     from sklearn.lda import LDA
@@ -73,7 +73,6 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
     Y_pred = np.zeros((Y.shape[0]))
     iters = 0
     seek = 0
-    dim = 10
 
     acc_list = []
 
@@ -101,12 +100,13 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
         print(Y_pred)
 
         print((Y_pred != Y_pred_last).sum()*1.0/N)
-        if (Y_pred != Y_pred_last).sum() < 0.001*N:
+        if (Y_pred != Y_pred_last).sum() < 0.005*N:
             break
         time.sleep(1)
 
         dec.write_net(db, dim, N_class, "'{:08}'".format(seek))
         weight = gmm_model.transform(feature)
+        transform = weight
 
         weight = (weight.T/weight.sum(axis=1)).T
         bias = (1.0/weight.sum(axis=0))
@@ -162,6 +162,24 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
 
         print(filename, "->", pred)
 
+    with open("cluster_centers.txt", "w") as file:
+        matrix = gmm_model.cluster_centers_.tolist()
+        s = [[str(e) for e in row] for row in matrix]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        file.write('\n'.join(table))
+    with open("transform_dist.txt", "w") as file:
+        matrix = transform.tolist()
+        s = [[str(e) for e in row] for row in matrix]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        file.write('\n'.join(table))
+    # print("Cluster Centers:", gmm_model.cluster_centers_)
+    # print("Transform:", transform.shape)
+
+
     with open(frames_file.replace("frame.txt", "cluster.txt"), "w") as out_file:
         # Filter content
         tag_keys = ["top", "bot", "left", "right", "cluster", "object_filename", target]
@@ -174,19 +192,21 @@ def DisKmeans(data, frames_file, target, db="image", update_interval=160):
 
 
 if __name__ == "__main__":
-    db = "image2"
+    # Settings
+    db = "image30x30_dim50"
     iters = 100000
+    dim = 50
+    img_width = 30
+    img_height = 30
 
 
     # Image data
-    data_path = "../output_00/15/15_Evening_1/"
+    data_path = "../output_00/data/2017-08-16_18-07-18/"
     target = "car"
     input_dir = os.path.join(data_path, target)
     frames_file = os.path.join(data_path, "frame.txt")
     output_dir = "output"
     option = None
-    img_width = 50
-    img_height = 50
 
     if option == None:
         img_channels = 4
@@ -212,7 +232,7 @@ if __name__ == "__main__":
     if not os.path.exists(os.path.join(mod_path, "pt_net.prototxt")) or not os.path.exists(os.path.join(mod_path, "ft_solver.prototxt")):
         pretrain.define_solver(db, {
             'n_layer': [4],
-            'dim': [input_dim, 500, 500, 2000, 10],
+            'dim': [input_dim, 500, 500, 2000, dim],
             'drop': [0.0],
             'rate': [0.1],
             'step': [20000],
@@ -222,7 +242,7 @@ if __name__ == "__main__":
 
     if not os.path.exists(os.path.join(mod_path, "stack_init_final.caffemodel")):
         pretrain.initialize_model(db, {
-            'dim': [input_dim, 500, 500, 2000, 10],
+            'dim': [input_dim, 500, 500, 2000, dim],
             'pt_iter': [50000],
             'drop': [0.2],
             'rate': [0.1],
@@ -235,4 +255,4 @@ if __name__ == "__main__":
         pretrain.export_model(db, iters)
 
 
-    DisKmeans(data, frames_file, target, db=db)
+    DisKmeans(data, frames_file, target, db=db, dim=dim)

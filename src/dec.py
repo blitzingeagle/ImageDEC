@@ -340,6 +340,7 @@ class TMM(object):
         kmeans = KMeans(self.n_components, n_init=20)
         kmeans.fit(X)
         self.cluster_centers_ = kmeans.cluster_centers_
+        print "Cluster Centers: ", self.cluster_centers_
         self.covars_ = np.ones(self.cluster_centers_.shape)
 
     def transform(self, X):
