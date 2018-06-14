@@ -99,7 +99,7 @@ def DisKmeans(data, target, db="image", dim=10, N_class = 5, update_interval=100
         print(Y_pred)
 
         print((Y_pred != Y_pred_last).sum()*1.0/N)
-        if (Y_pred != Y_pred_last).sum() < 0.0075*N:
+        if (Y_pred != Y_pred_last).sum() < 0.006*N:
             break
         time.sleep(1)
 
@@ -212,6 +212,22 @@ if __name__ == "__main__":
         group_dir = os.path.join(output_dir, "group%04d" % class_idx)
         os.makedirs(group_dir)
 
+    with open(os.path.join(output_dir, "cluster_centers.txt"), "w") as file:
+        matrix = cluster_centers
+        s = [[str(e) for e in row] for row in matrix]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        file.write('\n'.join(table))
+    with open(os.path.join(output_dir, "transform_weight.txt"), "w") as file:
+        matrix = transform
+        s = [[str(e) for e in row] for row in matrix]
+        lens = [max(map(len, col)) for col in zip(*s)]
+        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
+        table = [fmt.format(*row) for row in s]
+        file.write('\n'.join(table))
+
+
     if os.path.isfile(frames_file):
         with open(frames_file) as in_file:
             json_lines = in_file.readlines()
@@ -220,10 +236,17 @@ if __name__ == "__main__":
         json_lines = [{}] * N
 
 
+    weighted_data = [[] for i in range(N_class)]
+
     for idx, pred in enumerate(Y_pred):
+        # Copy file to group directory
         filename = os.path.basename(image_paths[idx])
         shutil.copyfile(image_paths[idx], os.path.join(output_dir, "group%04d" % pred, filename))
 
+        # Write to weighted_data
+        weighted_data[pred].append((filename, transform[idx][pred]))
+
+        # Write cluster data to JSON
         name_segs = os.path.splitext(filename)[0].split("_")
         frame_num = int(name_segs[1])
         obj_num = int(name_segs[3])
@@ -232,22 +255,20 @@ if __name__ == "__main__":
         tag_item["cluster"] = chr(ord('A') + pred)
         tag_item["object_filename"] = filename
 
-        print(filename, "->", pred)
+        print(filename, "->", pred, end=("\n" if idx % 4 == 3 else "\t\t"))
 
-    with open("cluster_centers.txt", "w") as file:
-        matrix = cluster_centers
-        s = [[str(e) for e in row] for row in matrix]
-        lens = [max(map(len, col)) for col in zip(*s)]
-        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
-        table = [fmt.format(*row) for row in s]
-        file.write('\n'.join(table))
-    with open("transform_dist.txt", "w") as file:
-        matrix = transform
-        s = [[str(e) for e in row] for row in matrix]
-        lens = [max(map(len, col)) for col in zip(*s)]
-        fmt = '\t'.join('{{:{}}}'.format(x) for x in lens)
-        table = [fmt.format(*row) for row in s]
-        file.write('\n'.join(table))
+    print()
+
+    group_files = [open(os.path.join(output_dir, "group%04d" % x, "cluster.txt"), 'w') for x in range(N_class)]
+
+    for (idx, weighted_group) in enumerate(weighted_data):
+        weighted_group = sorted(weighted_group, reverse=False)
+        for (filename, weight) in weighted_group:
+            group_files[idx].write("{} {}\n".format(filename, weight))
+
+    for file in group_files:
+        file.close()
+
     # print("Cluster Centers:", gmm_model.cluster_centers_)
     # print("Transform:", transform.shape)
 

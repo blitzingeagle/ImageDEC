@@ -38,7 +38,13 @@ imgsets = [None] * group_cnt
 while True:
     group_dir = group_dirs[group_idx]
     if imgsets[group_idx] == None:
-        imgsets[group_idx] = imgutils.resize_images(imgutils.load_imageset(group_dir, option), (img_height, img_width))
+        with open(os.path.join(group_dir, "cluster.txt")) as file:
+            contents = file.readlines()
+            file_list = [os.path.join(group_dir, content.split()[0]) for content in contents]
+            weights = [float(content.split()[1]) for content in contents]
+            imgsets[group_idx] = imgutils.resize_images(imgutils.load_images(file_list, option), (img_height, img_width))
+            for idx, img in enumerate(imgsets[group_idx]):
+                cv2.putText(img, "%3f"%weights[idx], (0, 10), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255))
     imgset = imgsets[group_idx]
     size = len(imgset)
 
