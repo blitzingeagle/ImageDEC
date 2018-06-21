@@ -17,10 +17,10 @@ RUN pip install -U leveldb  # fix GH Issue #7
 
 # Copy the source files over and build the project
 
-COPY . /usr/local/src/dec
-WORKDIR /usr/local/src/dec
+COPY . /usr/local/src/ImageDEC
+WORKDIR /usr/local/src/ImageDEC
 
-RUN cd /usr/local/src/dec/caffe && \
+RUN cd /usr/local/src/ImageDEC/caffe && \
     cp Makefile.config.example Makefile.config && \
     make -j"$(nproc)" all && \
     make pycaffe
