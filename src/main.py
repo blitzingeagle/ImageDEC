@@ -15,6 +15,8 @@ from glob import glob
 
 import json
 
+from argparse import ArgumentParser
+
 
 def make_data(data, db="image"):
     db_path = os.path.join("modules", db, "database")
@@ -136,6 +138,11 @@ def DisKmeans(data, target, db="image", dim=10, N_class = 5, update_interval=100
     return (Y_pred, cluster_centers, transform)
 
 
+parser = ArgumentParser("Produce clusters from image data.")
+parser.add_argument("-db", "--database", type=str, default="image30x30_dim50", metavar="DATABASE", help="Database name for clustermodel.")
+parser.add_argument("-c", "--classes", type=int, default=5, metavar="CLASSES", help="Number of classes of clustering.")
+
+
 if __name__ == "__main__":
     # Settings
     db = "image30x30_dim50"
@@ -145,12 +152,12 @@ if __name__ == "__main__":
     img_width = 30
     img_height = 30
 
-    data_path = "../output_00/data/2017-08-16_18-07-18/"
+    data_path = "../../output/15_Evening_1"
     target = "car"
     frames_file = os.path.join(data_path, "frame.txt")
 
     input_dir = os.path.join(data_path, target)
-    output_dir = "output"
+    output_dir = os.path.join(input_dir, "clusters")
     option = None
 
     image_paths = imgutils.image_paths(input_dir)
