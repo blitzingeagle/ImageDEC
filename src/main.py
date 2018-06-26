@@ -101,7 +101,7 @@ def DisKmeans(data, target, db="image", dim=10, N_class = 5, update_interval=100
         print(Y_pred)
 
         print((Y_pred != Y_pred_last).sum()*1.0/N)
-        if (Y_pred != Y_pred_last).sum() < 0.006*N:
+        if (Y_pred != Y_pred_last).sum() < 0.001*N:
             break
         time.sleep(1)
 
@@ -139,21 +139,33 @@ def DisKmeans(data, target, db="image", dim=10, N_class = 5, update_interval=100
 
 
 parser = ArgumentParser("Produce clusters from image data.")
-parser.add_argument("-db", "--database", type=str, default="image30x30_dim50", metavar="DATABASE", help="Database name for clustermodel.")
+parser.add_argument("-db", "--database", type=str, default="image30x30_dim50", metavar="DATABASE", help="Database name for cluster model.")
 parser.add_argument("-c", "--classes", type=int, default=5, metavar="CLASSES", help="Number of classes of clustering.")
+parser.add_argument("-dim", "--dimensions", type=int, default=50, metavar="DIMENSIONS", help="Dimensionality of cluster data.")
+parser.add_argument("-iw", "--width", type=int, default=30, metavar="WIDTH", help="Width of cluster data.")
+parser.add_argument("-ih", "--height", type=int, default=30, metavar="HEIGHT", help="Height of cluster data.")
+parser.add_argument("-t", "--target", type=str, metavar="TARGET", help="Target name.")
+parser.add_argument("-p", "--path", type=str, metavar="PATH", help="Path of frames.")
+parser.add_argument("-loc", "--location", type=str, default=".", metavar="LOC", help="Caller location.")
 
 
 if __name__ == "__main__":
-    # Settings
-    db = "image30x30_dim50"
-    iters = 100000
-    dim = 50
-    N_class = 5
-    img_width = 30
-    img_height = 30
+    args = parser.parse_args()
+    if args.target is None or args.path is None:
+        print("Needs target and path.")
+        parser.print_help()
+        exit(0)
 
-    data_path = "../../output/15_Evening_1"
-    target = "car"
+    # Settings
+    db = args.database
+    iters = 100000
+    dim = args.dimensions
+    N_class = args.classes
+    img_width = args.width
+    img_height = args.height
+
+    data_path = os.path.join(args.location, args.path)
+    target = args.target
     frames_file = os.path.join(data_path, "frame.txt")
 
     input_dir = os.path.join(data_path, target)
@@ -260,13 +272,13 @@ if __name__ == "__main__":
 
         tag_item = json_lines[frame_num - 1]["tag"][obj_num - 1]
         tag_item["cluster"] = chr(ord('A') + pred)
-        tag_item["object_filename"] = filename
+        tag_item["object_filename"] = os.path.join(args.path, filename)
 
         print(filename, "->", pred, end=("\n" if idx % 4 == 3 else "\t\t"))
 
     print()
 
-    group_files = [open(os.path.join(output_dir, "group%04d" % x, "cluster.txt"), 'w') for x in range(N_class)]
+    group_files = [open(os.path.join(output_dir, "group%04d" % x, "cluster_info.txt"), 'w') for x in range(N_class)]
 
     for (idx, weighted_group) in enumerate(weighted_data):
         weighted_group = sorted(weighted_group, reverse=False)

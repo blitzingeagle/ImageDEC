@@ -6,7 +6,7 @@ from operator import mul
 
 # === Imageset Loading ===
 def image_paths(directory):
-    return sorted(glob(path.join(directory, '*')))
+    return sorted(glob(path.join(directory, '*.jpg')))
 
 
 def load_images(filepaths, option=cv2.IMREAD_COLOR):
