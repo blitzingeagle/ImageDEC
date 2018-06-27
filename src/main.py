@@ -147,6 +147,7 @@ parser.add_argument("-ih", "--height", type=int, default=30, metavar="HEIGHT", h
 parser.add_argument("-t", "--target", type=str, metavar="TARGET", help="Target name.")
 parser.add_argument("-p", "--path", type=str, metavar="PATH", help="Path of frames.")
 parser.add_argument("-loc", "--location", type=str, default=".", metavar="LOC", help="Caller location.")
+parser.add_argument("--clean", action="store_true", help="Clean module.")
 
 
 if __name__ == "__main__":
@@ -155,6 +156,9 @@ if __name__ == "__main__":
         print("Needs target and path.")
         parser.print_help()
         exit(0)
+
+    if args.clean:
+        os.system("rm -rf {}".format(os.path.join("modules", args.database)))
 
     # Settings
     db = args.database
