@@ -276,7 +276,7 @@ if __name__ == "__main__":
 
         tag_item = json_lines[frame_num - 1]["tag"][obj_num - 1]
         tag_item["cluster"] = chr(ord('A') + pred)
-        tag_item["object_filename"] = os.path.join(args.path, filename)
+        tag_item["object_filename"] = os.path.join(args.path, target, filename)
 
         print(filename, "->", pred, end=("\n" if idx % 4 == 3 else "\t\t"))
 
